@@ -104,6 +104,59 @@ def fetch_trials_for_diagnoses(diagnoses: list, max_per_condition: int = 5) -> l
 
 # ── SECTION 2: LLM Eligibility Parser ──
 
+# ── Cache: avoid re-parsing same trial ──
+import os as _os
+_CACHE_PATH = _os.path.join(_os.path.dirname(__file__), ".eligibility_cache.json")
+
+def _load_cache() -> dict:
+    try:
+        if _os.path.exists(_CACHE_PATH):
+            with open(_CACHE_PATH, "r") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+def _save_cache(cache: dict):
+    try:
+        with open(_CACHE_PATH, "w") as f:
+            json.dump(cache, f, indent=2)
+    except Exception:
+        pass
+
+_eligibility_cache = _load_cache()
+
+
+def _smart_truncate(criteria_text: str, max_chars: int = 2000) -> str:
+    """
+    Akıllı kırpma: inclusion ve exclusion bölümlerini dengeli şekilde kırpar.
+    Önemli kriterlerin kaybolmaması için her bölümden eşit pay alır.
+    """
+    if len(criteria_text) <= max_chars:
+        return criteria_text
+
+    text_lower = criteria_text.lower()
+
+    # Exclusion bölümünün başlangıcını bul
+    excl_markers = ["exclusion criteria", "exclusion:", "exclude:", "ineligible if"]
+    excl_idx = -1
+    for marker in excl_markers:
+        idx = text_lower.find(marker)
+        if idx > 0:
+            excl_idx = idx
+            break
+
+    if excl_idx > 0:
+        # Her bölümden yarısını al
+        half = max_chars // 2
+        inclusion_part = criteria_text[:excl_idx][:half]
+        exclusion_part = criteria_text[excl_idx:][:half]
+        return inclusion_part + "\n" + exclusion_part
+    else:
+        # Bölüm bulunamadıysa başından kırp
+        return criteria_text[:max_chars]
+
+
 ELIGIBILITY_PARSE_PROMPT = """
 You are a clinical trial eligibility expert. Parse the following eligibility criteria text
 and extract structured inclusion and exclusion criteria.
@@ -143,6 +196,17 @@ def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> dict:
     if not criteria_text or len(criteria_text.strip()) < 20:
         return {"inclusion_criteria": [], "exclusion_criteria": []}
 
+    # ── Cache check: skip LLM if already parsed ──
+    if trial_id and trial_id in _eligibility_cache:
+        cached = _eligibility_cache[trial_id]
+        print(f"[CACHE] Using cached eligibility for {trial_id} "
+              f"({len(cached.get('inclusion_criteria', []))} inclusion + "
+              f"{len(cached.get('exclusion_criteria', []))} exclusion)")
+        return cached
+
+    # ── Smart truncation: preserve both inclusion and exclusion sections ──
+    truncated_text = _smart_truncate(criteria_text, max_chars=2000)
+
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
@@ -154,7 +218,7 @@ def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> dict:
                 {
                     "role": "user",
                     "content": ELIGIBILITY_PARSE_PROMPT.format(
-                        criteria_text=criteria_text[:3000]
+                        criteria_text=truncated_text
                     )
                 }
             ],
@@ -166,6 +230,12 @@ def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> dict:
         parsed = json.loads(raw)
         print(f"[INFO] Parsed {len(parsed.get('inclusion_criteria', []))} inclusion + "
               f"{len(parsed.get('exclusion_criteria', []))} exclusion criteria for {trial_id}")
+
+        # ── Save to cache ──
+        if trial_id:
+            _eligibility_cache[trial_id] = parsed
+            _save_cache(_eligibility_cache)
+
         return parsed
 
     except json.JSONDecodeError as e:
