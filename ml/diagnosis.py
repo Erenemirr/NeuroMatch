@@ -235,7 +235,7 @@ async def generate_diagnosis(patient_profile: dict, disease_profiles: dict = Non
         for attempt in range(3):
             try:
                 response = await client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {
                             "role": "system",
