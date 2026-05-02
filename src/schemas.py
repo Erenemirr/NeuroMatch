@@ -10,16 +10,22 @@ class Criterion(BaseModel):
 class PatientProfile(BaseModel):
     age: int
     gender: str
-    symptoms: str
-    medical_history: List[str] = []
-    user_type: str = "patient" # patient or professional
+    symptoms: List[str]
+    duration: Optional[str] = ""
+    existing_conditions: List[str] = []
+    medications: List[str] = []
+    user_type: str = "patient"
 
 class TrialResult(BaseModel):
     trial_id: str
     title: str
-    match_score: float
+    matchScore: int
+    phase: str = "N/A"
     criteria_status: List[Criterion]
     summary: str
+    rationale: str
+    patientBenefit: str
+    doctorInsight: str
     next_steps: List[str]
 
 class AnalysisResponse(BaseModel):

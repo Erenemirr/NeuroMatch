@@ -51,7 +51,8 @@ async def analyze_patient(profile: PatientProfile):
     """
     try:
         # 1. Get embedding for symptoms using real data
-        matches = embedder.find_matches(profile.symptoms, REAL_TRIALS)
+        symptoms_str = ", ".join(profile.symptoms)
+        matches = embedder.find_matches(symptoms_str, REAL_TRIALS)
         
         # 2. Run Matching Engine for eligibility
         results = []
@@ -65,14 +66,18 @@ async def analyze_patient(profile: PatientProfile):
             results.append(TrialResult(
                 trial_id=trial_data['id'],
                 title=trial_data['title'],
-                match_score=match_score,
-                criteria_status=criteria_results['checks'],
-                summary=criteria_results['summary'],
-                next_steps=criteria_results['next_steps']
+                matchScore=criteria_results.get('matchScore', int(match_score * 100)),
+                phase=criteria_results.get('phase', 'N/A'),
+                criteria_status=criteria_results.get('checks', []),
+                summary=criteria_results.get('summary', ''),
+                rationale=criteria_results.get('rationale', ''),
+                patientBenefit=criteria_results.get('patientBenefit', ''),
+                doctorInsight=criteria_results.get('doctorInsight', ''),
+                next_steps=criteria_results.get('next_steps', [])
             ))
 
         return AnalysisResponse(
-            patient_summary=f"Analysis for {profile.age}yo patient focusing on {profile.symptoms[:50]}...",
+            patient_summary=f"Analysis for {profile.age}yo patient focusing on {symptoms_str[:50]}...",
             matches=results
         )
         
