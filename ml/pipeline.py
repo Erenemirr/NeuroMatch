@@ -9,6 +9,7 @@ from diagnosis import generate_diagnosis, load_symptom_dataset, format_diagnosis
 from parser import fetch_trials_for_diagnoses, parse_trials_batch
 from validator import validate_trials_batch, validate_patient_profile
 from gap_explainer import analyze_all_trials
+from oasis_estimator import enrich_patient_with_oasis, format_oasis_summary
 
 
 def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
@@ -48,6 +49,17 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
     diagnoses = patient_profile.get("predicted_diagnosis", [])
     print(f"  ✅ Top diagnosis: {diagnoses[0]['disease'] if diagnoses else 'Unknown'} "
           f"({int(diagnoses[0]['confidence'] * 100)}% confidence)" if diagnoses else "  ✅ Diagnosis complete")
+
+    # ── STEP 1.5: Enrich with OASIS-2 data ──
+    print("\n[Step 1.5] Enriching patient profile with OASIS-2 clinical data...")
+    patient_profile = enrich_patient_with_oasis(patient_profile)
+    oasis = patient_profile.get("oasis_estimates", {})
+    if oasis.get("available"):
+        mmse_range = oasis["mmse"]["estimated_range"]
+        print(f"  ✅ OASIS-2: estimated MMSE {mmse_range[0]}–{mmse_range[1]}, "
+              f"CDR {oasis['cdr']['most_common']} (n={oasis['sample_size']})")
+    else:
+        print(f"  ⚠️  OASIS-2 not available: {oasis.get('reason', 'unknown')}")
 
     # ── STEP 2: Fetch clinical trials ──
     print("\n[Step 2] Fetching clinical trials from ClinicalTrials.gov...")
@@ -91,6 +103,10 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
     print("✅ NeuroMatch Pipeline Complete")
     print("="*60)
 
+    # ── STEP 7: Format OASIS summary ──
+    oasis_estimates = patient_profile.get("oasis_estimates", {})
+    oasis_summary = format_oasis_summary(oasis_estimates, audience) if oasis_estimates.get("available") else ""
+
     return {
         "patient_id": patient_profile.get("patient_id", "unknown"),
         "audience": audience,
@@ -98,6 +114,8 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
         "diagnosis_formatted": diagnosis_formatted,
         "trials_analyzed": len(gap_results),
         "gap_analysis": gap_results,
+        "oasis_estimates": oasis_estimates,
+        "oasis_summary": oasis_summary,
         "summary": {
             "likely_eligible": len(eligible),
             "needs_more_info": len(needs_info),

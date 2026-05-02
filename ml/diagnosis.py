@@ -1,6 +1,8 @@
 """
-NeuroMatch — Layer 2: LLM-based Neurological Diagnosis
-Generates confidence-scored preliminary diagnosis from patient symptoms.
+NeuroMatch — Layer 2: Hybrid Neurological Diagnosis
+Combines semantic symptom embedding (cosine similarity) with LLM-based diagnosis.
+Uses SymptomEmbedder from the backend for vector similarity scoring,
+then feeds those scores into the LLM for a richer, grounded diagnosis.
 """
 
 import os
@@ -11,6 +13,23 @@ from dotenv import load_dotenv
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+# ── HYBRID: Import SymptomEmbedder from backend ──
+# Works whether running from ml/ or from project root
+try:
+    import sys
+    import os as _os
+    _root = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    if _root not in sys.path:
+        sys.path.insert(0, _root)
+    from src.embedder import SymptomEmbedder
+    _embedder = SymptomEmbedder()
+    EMBEDDING_AVAILABLE = True
+    print("[INFO] SymptomEmbedder loaded — hybrid mode active")
+except Exception as e:
+    _embedder = None
+    EMBEDDING_AVAILABLE = False
+    print(f"[INFO] SymptomEmbedder not available, using LLM-only mode: {e}")
 
 # ── NEUROLOGICAL DISEASE PROFILES ──
 # Loaded from our Kaggle datasets to build reference profiles
@@ -70,6 +89,55 @@ def load_symptom_dataset(dataset_path: str = "data/datasets/symptom_disease/data
         return {}
 
 
+# ── SECTION: Semantic Similarity Scoring ──
+
+# Static disease descriptions for embedding similarity
+DISEASE_DESCRIPTIONS = {
+    "Alzheimer's Disease": "memory loss confusion behavioral changes difficulty with daily tasks cognitive decline forgetting names places",
+    "Parkinson's Disease": "tremor resting tremor rigidity bradykinesia slowness of movement balance problems shuffling gait",
+    "Multiple Sclerosis": "vision problems muscle weakness numbness tingling fatigue balance coordination issues relapsing remitting",
+    "Epilepsy": "seizures convulsions loss of consciousness staring spells abnormal movements repetitive behavior",
+    "ALS": "muscle weakness muscle atrophy difficulty swallowing speech problems breathing difficulty progressive weakness",
+    "Huntington's Disease": "involuntary movements chorea cognitive decline personality changes mood swings difficulty walking",
+    "Migraine": "severe headache throbbing pain nausea vomiting light sensitivity sound sensitivity aura visual disturbance",
+    "Peripheral Neuropathy": "numbness tingling burning pain in hands feet weakness loss of sensation peripheral nerves",
+    "Dementia": "memory loss confusion disorientation difficulty with daily tasks personality changes cognitive decline",
+    "Brain Tumor": "headaches seizures vision changes personality changes memory problems weakness one side",
+    "Cerebrovascular Disease": "sudden weakness numbness face arm leg sudden confusion trouble speaking stroke TIA",
+    "Myasthenia Gravis": "muscle weakness drooping eyelids double vision difficulty swallowing fatigue worsens with activity"
+}
+
+
+def compute_embedding_similarity(symptoms: list) -> list:
+    """
+    Computes cosine similarity between patient symptoms and disease profiles.
+    Uses SymptomEmbedder from the backend (sentence-transformers).
+
+    Returns:
+        List of (disease, similarity_score) sorted by score descending
+    """
+    if not EMBEDDING_AVAILABLE or not _embedder:
+        return []
+
+    try:
+        symptom_text = " ".join(symptoms)
+
+        disease_profiles = [
+            {"id": disease, "description": desc, "title": disease}
+            for disease, desc in DISEASE_DESCRIPTIONS.items()
+        ]
+
+        matches = _embedder.find_matches(symptom_text, disease_profiles, top_k=6)
+
+        results = [(m["profile"]["id"], round(float(m["score"]), 4)) for m in matches]
+        print(f"[HYBRID] Top embedding matches: {results[:3]}")
+        return results
+
+    except Exception as e:
+        print(f"[WARNING] Embedding similarity failed: {e}")
+        return []
+
+
 # ── DIAGNOSIS PROMPT ──
 DIAGNOSIS_PROMPT = """
 You are a neurological AI assistant. Your role is to analyze patient symptoms
@@ -89,6 +157,11 @@ Patient Information:
 
 Known Neurological Disease Profiles from our dataset:
 {disease_profiles}
+
+Semantic Similarity Scores (cosine similarity between patient symptoms and disease profiles):
+{embedding_scores}
+
+Use the semantic similarity scores as a prior — they reflect how closely the patient's symptom text matches known disease descriptions. Combine this with your clinical reasoning to assign final confidence scores.
 
 Based on the symptoms provided, return a JSON with the following structure:
 {{
@@ -114,6 +187,7 @@ Only return valid JSON, nothing else.
 def generate_diagnosis(patient_profile: dict, disease_profiles: dict = None) -> dict:
     """
     Generates a confidence-scored neurological diagnosis from patient symptoms.
+    Hybrid mode: uses semantic embedding similarity + LLM reasoning together.
 
     Args:
         patient_profile: Patient data following patient_schema.json
@@ -122,6 +196,18 @@ def generate_diagnosis(patient_profile: dict, disease_profiles: dict = None) -> 
     Returns:
         Diagnosis dict with confidence scores
     """
+    symptoms = patient_profile.get("symptoms", [])
+
+    # ── Hybrid: compute embedding similarity scores ──
+    embedding_scores = compute_embedding_similarity(symptoms)
+    if embedding_scores:
+        embedding_text = "\n".join([
+            f"- {disease}: {score:.4f} similarity score"
+            for disease, score in embedding_scores
+        ])
+    else:
+        embedding_text = "Embedding scores not available — using LLM-only reasoning."
+
     # Format disease profiles for prompt
     if disease_profiles:
         profiles_text = "\n".join([
@@ -134,12 +220,13 @@ def generate_diagnosis(patient_profile: dict, disease_profiles: dict = None) -> 
     prompt = DIAGNOSIS_PROMPT.format(
         age=patient_profile.get("age", "Unknown"),
         gender=patient_profile.get("gender", "Unknown"),
-        symptoms=", ".join(patient_profile.get("symptoms", [])),
+        symptoms=", ".join(symptoms),
         duration=patient_profile.get("duration", "Unknown"),
         existing_conditions=", ".join(patient_profile.get("existing_conditions", [])) or "None",
         medications=", ".join(patient_profile.get("medications", [])) or "None",
         report_text=patient_profile.get("report_text") or "Not provided",
-        disease_profiles=profiles_text
+        disease_profiles=profiles_text,
+        embedding_scores=embedding_text
     )
 
     try:
