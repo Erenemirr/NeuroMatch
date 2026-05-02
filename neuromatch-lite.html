@@ -8,79 +8,46 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #f4f7fa; /* Aydınlık klinik arka plan */
-  --s1: #ffffff; /* Beyaz kartlar */
-  --s2: #f8fafc; /* Hafif gri iç alanlar */
+  --bg: #f4f7fa;
+  --s1: #ffffff;
+  --s2: #f8fafc;
   --s3: #f1f5f9;
-  --b1: rgba(0,0,0,0.05); /* Yumuşak kenarlıklar */
+  --b1: rgba(0,0,0,0.05);
   --b2: rgba(0,0,0,0.1);
   --b3: rgba(0,0,0,0.15);
-  --t1: #0f172a; /* Koyu profesyonel yazı */
-  --t2: #475569; /* Gri alt yazı */
+  --t1: #0f172a;
+  --t2: #475569;
   --t3: #94a3b8;
-  --blue: #2563eb; /* Medikal mavi */
+  --blue: #2563eb;
   --blue-d: rgba(37,99,235,0.08);
   --blue-g: rgba(37,99,235,0.15);
-  --green: #10b981; 
+  --green: #10b981;
   --green-d: rgba(16,185,129,0.1);
   --amber: #f59e0b;
+  --amber-d: rgba(245,158,11,0.1);
   --red: #ef4444;
+  --red-d: rgba(239,68,68,0.1);
   --purple: #8b5cf6;
   --r: 8px; --rl: 12px; --rxl: 16px;
 }
-
 body {
-  font-family: 'DM Sans', sans-serif; 
-  background: var(--bg); 
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
   color: var(--t1);
-  min-height: 100vh; 
-  display: flex; 
+  min-height: 100vh;
+  display: flex;
   justify-content: center;
-  padding: 2.5rem 1rem 5rem;
-  /* Arka plan gradyanını daha yumuşak yapalım */
-  background-image: 
-    radial-gradient(circle at 0% 0%, rgba(37,99,235,0.05) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(37,99,235,0.03) 0%, transparent 50%);
-}
-
-.card {
-  background: var(--s1); 
-  border: 1px solid var(--b1); 
-  border-radius: var(--rxl);
-  padding: 2rem; 
-  margin-bottom: 1rem;
-  /* Koyu gölge yerine çok hafif bir derinlik */
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-}
-
-.logo {
-  background: #2563eb; /* Logoyu düz mavi yapalım */
-  color: white;
-  border: none;
-  box-shadow: 0 4px 12px rgba(37,99,235,0.2);
-}
-
-.brand {
-  background: linear-gradient(130deg, #0f172a 20%, #334155 100%);
-  -webkit-background-clip: text; 
-  -webkit-text-fill-color: transparent;
-}
-body {
-  font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t1);
-  min-height: 100vh; display: flex; justify-content: center;
   padding: 2.5rem 1rem 5rem;
   background-image:
     radial-gradient(ellipse 60% 40% at 15% 0%, rgba(91,156,246,0.07) 0%, transparent 70%),
     radial-gradient(ellipse 50% 40% at 85% 100%, rgba(177,151,252,0.05) 0%, transparent 70%);
 }
 .app { width: 100%; max-width: 740px; animation: fu .5s ease both; }
-
 @keyframes fu { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
 @keyframes si { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 @keyframes sp { to{transform:rotate(360deg)} }
 @keyframes cu { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
 @keyframes pr { 0%{box-shadow:0 0 0 0 var(--blue-g)} 70%{box-shadow:0 0 0 8px transparent} 100%{box-shadow:0 0 0 0 transparent} }
-
 /* HEADER */
 .hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:2rem; }
 .hdr-l { display:flex; align-items:center; gap:14px; }
@@ -93,7 +60,7 @@ body {
 }
 .brand {
   font-family:'Syne',sans-serif; font-size:21px; font-weight:700; letter-spacing:-.5px;
-  background:linear-gradient(130deg,#e8edf8 20%,#8aaac8 100%);
+  background:linear-gradient(130deg,#1e3a5f 20%,#2563eb 100%);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
 }
 .sub { font-size:12px; color:var(--t3); margin-top:2px; letter-spacing:.2px; }
@@ -101,14 +68,12 @@ body {
   font-size:10px; font-family:'DM Mono',monospace; padding:4px 10px; border-radius:20px;
   background:var(--blue-d); color:var(--blue); border:1px solid rgba(91,156,246,0.18); letter-spacing:.5px;
 }
-
 /* CARD */
 .card {
   background:var(--s1); border:1px solid var(--b1); border-radius:var(--rxl);
   padding:1.75rem; margin-bottom:.875rem;
-  box-shadow:0 8px 40px rgba(0,0,0,.35);
+  box-shadow:0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
 }
-
 /* TABS */
 .tabs { display:flex; gap:3px; padding:4px; background:var(--s2); border-radius:12px; margin-bottom:1.5rem; }
 .tab {
@@ -116,8 +81,7 @@ body {
   border:none; background:none; color:var(--t2); border-radius:9px;
   font-family:'DM Sans',sans-serif; transition:all .2s;
 }
-.tab.active { background:var(--s3); color:var(--t1); box-shadow:0 2px 8px rgba(0,0,0,.3); }
-
+.tab.active { background:var(--s1); color:var(--t1); box-shadow:0 2px 8px rgba(0,0,0,.08); }
 /* FORM */
 .lbl { font-size:11px; font-weight:500; color:var(--t3); text-transform:uppercase; letter-spacing:.8px; margin-bottom:7px; display:block; }
 textarea, select, input {
@@ -132,16 +96,15 @@ select { cursor:pointer; }
 textarea::placeholder { color:var(--t3); }
 .sec { margin-bottom:1.25rem; }
 .r2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-
+.r3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
 /* UPLOAD */
 .upz {
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   border:1px dashed var(--b2); border-radius:var(--rl); padding:2.5rem; cursor:pointer;
   background:var(--s2); transition:all .25s; text-align:center;
 }
-.upz:hover { border-color:var(--blue); background:var(--blue-d); box-shadow:0 0 24px var(--blue-d); }
+.upz:hover { border-color:var(--blue); background:var(--blue-d); }
 .upz input { display:none; }
-
 /* BUTTONS */
 .brow { display:flex; gap:10px; align-items:center; margin-top:1.5rem; }
 .btn {
@@ -150,37 +113,34 @@ textarea::placeholder { color:var(--t3); }
   cursor:pointer; transition:all .2s; border:none; letter-spacing:.1px;
 }
 .btn-p {
-  background:linear-gradient(135deg,#1d4ed8,#5b9cf6); color:#fff;
-  box-shadow:0 4px 18px rgba(91,156,246,.3);
+  background:linear-gradient(135deg,#1d4ed8,#3b82f6); color:#fff;
+  box-shadow:0 4px 18px rgba(59,130,246,.3);
 }
-.btn-p:hover { box-shadow:0 6px 26px rgba(91,156,246,.45); transform:translateY(-1px); }
+.btn-p:hover { box-shadow:0 6px 26px rgba(59,130,246,.45); transform:translateY(-1px); }
 .btn-p:active { transform:translateY(0); }
 .btn-g { background:var(--s2); border:1px solid var(--b2); color:var(--t2); }
 .btn-g:hover { background:var(--s3); color:var(--t1); }
 .btn-sm { padding:7px 14px; font-size:12px; }
-
 /* STEPS */
 .steps { display:flex; align-items:center; gap:8px; margin-bottom:1.5rem; font-size:12px; color:var(--t3); }
 .sdot {
   width:26px; height:26px; border-radius:50%; font-size:11px; font-weight:500;
   display:flex; align-items:center; justify-content:center; flex-shrink:0;
 }
-.sdot.done { background:var(--green-d); color:var(--green); border:1px solid rgba(54,217,160,.25); }
-.sdot.act  { background:var(--blue-d);  color:var(--blue);  border:1px solid rgba(91,156,246,.3); animation:pr 2s infinite; }
+.sdot.done { background:var(--green-d); color:var(--green); border:1px solid rgba(16,185,129,.25); }
+.sdot.act  { background:var(--blue-d);  color:var(--blue);  border:1px solid rgba(37,99,235,.3); animation:pr 2s infinite; }
 .sdot.todo { background:var(--s2); color:var(--t3); border:1px solid var(--b1); }
 .sline { flex:1; height:1px; background:var(--b1); }
-
 /* LOADER */
 .ldr-wrap { display:flex; flex-direction:column; align-items:center; padding:3rem; gap:1.5rem; }
 .ldr-ring {
   width:50px; height:50px; border:3px solid var(--b2);
   border-top-color:var(--blue); border-radius:50%;
-  animation:sp .9s linear infinite; box-shadow:0 0 20px var(--blue-d);
+  animation:sp .9s linear infinite;
 }
 .ldr-dots { display:flex; gap:7px; }
 .ldot { width:7px; height:7px; border-radius:50%; background:var(--b2); transition:background .3s; }
 .ldot.act { background:var(--blue); }
-
 /* STATS */
 .sgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:1.5rem; }
 .stat {
@@ -190,8 +150,7 @@ textarea::placeholder { color:var(--t3); }
 .stat:nth-child(2){animation-delay:.05s} .stat:nth-child(3){animation-delay:.1s} .stat:nth-child(4){animation-delay:.15s}
 .slbl { font-size:10px; color:var(--t3); text-transform:uppercase; letter-spacing:.6px; }
 .sval { font-size:26px; font-weight:600; margin-top:4px; font-family:'Syne',sans-serif; }
-.sval.g{color:var(--green)} .sval.a{color:var(--amber)} .sval.b{color:var(--blue);font-size:20px;font-family:'DM Mono',monospace;}
-
+.sval.g{color:var(--green)} .sval.a{color:var(--amber)} .sval.r{color:var(--red)} .sval.b{color:var(--blue);font-size:20px;font-family:'DM Mono',monospace;}
 /* AUDIENCE BOX */
 .abox {
   background:var(--s2); border:1px solid var(--b1); border-radius:var(--rl);
@@ -206,10 +165,21 @@ textarea::placeholder { color:var(--t3); }
 .albl { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:.6px; }
 .abadge {
   font-size:11px; font-weight:500; padding:3px 10px; border-radius:20px;
-  background:var(--blue-d); color:var(--blue); border:1px solid rgba(91,156,246,.2);
+  background:var(--blue-d); color:var(--blue); border:1px solid rgba(37,99,235,.2);
 }
 .atxt { font-size:13px; color:var(--t2); line-height:1.75; }
-
+/* DIAGNOSIS BOX */
+.dbox {
+  background:var(--s2); border:1px solid var(--b1); border-radius:var(--rl);
+  padding:16px 18px; margin-bottom:1.5rem;
+}
+.drow { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--b1); }
+.drow:last-child { border-bottom:none; }
+.dname { font-size:13px; font-weight:500; color:var(--t1); }
+.dbar-wrap { flex:1; margin:0 14px; }
+.dbar-bg { height:4px; background:var(--s3); border-radius:2px; overflow:hidden; }
+.dbar-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--blue),var(--purple)); transition:width .9s cubic-bezier(.4,0,.2,1); }
+.dpct { font-size:12px; font-family:'DM Mono',monospace; color:var(--blue); font-weight:500; }
 /* FILTER */
 .frow { display:flex; gap:6px; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center; }
 .flbl { font-size:11px; color:var(--t3); text-transform:uppercase; letter-spacing:.6px; margin-right:4px; }
@@ -220,18 +190,16 @@ textarea::placeholder { color:var(--t3); }
 }
 .fbtn:hover { border-color:var(--blue); color:var(--blue); }
 .fbtn.act { background:var(--blue); color:#fff; border-color:var(--blue); }
-
 /* TRIAL CARDS */
 .tc {
   background:var(--s2); border:1px solid var(--b1); border-radius:var(--rl);
   padding:16px 18px; margin-bottom:10px; transition:all .2s;
   position:relative; overflow:hidden; animation:si .35s ease both;
 }
-.tc:hover { border-color:var(--b2); transform:translateY(-1px); box-shadow:0 10px 30px rgba(0,0,0,.25); }
+.tc:hover { border-color:var(--b2); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.08); }
 .tc.eligible::before  { content:''; position:absolute; left:0;top:0;bottom:0;width:3px;background:var(--green);border-radius:3px 0 0 3px; }
 .tc.partial::before   { content:''; position:absolute; left:0;top:0;bottom:0;width:3px;background:var(--amber);border-radius:3px 0 0 3px; }
 .tc.ineligible::before{ content:''; position:absolute; left:0;top:0;bottom:0;width:3px;background:var(--red);border-radius:3px 0 0 3px; }
-
 .th { display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; }
 .ti { font-size:15px; flex-shrink:0; margin-top:2px; }
 .tt { font-size:14px; font-weight:500; line-height:1.4; flex:1; }
@@ -239,46 +207,30 @@ textarea::placeholder { color:var(--t3); }
   font-family:'DM Mono',monospace; font-size:13px; font-weight:500;
   padding:3px 9px; border-radius:6px; flex-shrink:0;
 }
-.ts.h{background:var(--green-d);color:var(--green);border:1px solid rgba(54,217,160,.2);}
-.ts.m{background:var(--amber-d);color:var(--amber);border:1px solid rgba(245,200,66,.2);}
-.ts.l{background:var(--red-d);color:var(--red);border:1px solid rgba(249,112,112,.2);}
-
+.ts.h{background:var(--green-d);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.ts.m{background:var(--amber-d);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+.ts.l{background:var(--red-d);color:var(--red);border:1px solid rgba(239,68,68,.2);}
 .bar-bg { height:3px; background:var(--s3); border-radius:2px; overflow:hidden; margin:8px 0 12px; }
 .bar-fill { height:100%; border-radius:2px; transition:width .9s cubic-bezier(.4,0,.2,1); }
-
 .tmeta { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px; font-size:12px; color:var(--t3); }
 .tid { font-family:'DM Mono',monospace; font-size:10px; }
-
 .crit { display:flex; flex-direction:column; gap:5px; }
 .cr { display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--t2); line-height:1.45; }
 .ci { flex-shrink:0; font-size:11px; margin-top:1px; }
-
-.exbtn {
-  margin-top:12px; font-size:12px; color:var(--blue); background:none; border:none;
-  cursor:pointer; font-family:'DM Sans',sans-serif; padding:0; transition:opacity .15s;
-}
-.exbtn:hover { opacity:.75; }
-
-.rsn {
-  margin-top:12px; padding:12px 14px; border-radius:var(--r);
-  background:var(--s3); font-size:12px; color:var(--t2); line-height:1.65;
-  display:none; border:1px solid var(--b1);
-}
-.rsn.open { display:block; animation:si .25s ease both; }
-.rsn ul { padding-left:16px; margin-top:6px; }
-.rsn li { margin-bottom:4px; }
-.rsn strong { color:var(--t1); font-weight:500; }
-
 /* DISCLAIMER */
 .disc {
   margin-top:1.5rem; padding:12px 16px; border-radius:var(--r);
-  background:rgba(245,200,66,.04); font-size:11px; color:var(--t3);
-  line-height:1.65; border:1px solid rgba(245,200,66,.12);
+  background:rgba(245,158,11,.04); font-size:11px; color:var(--t3);
+  line-height:1.65; border:1px solid rgba(245,158,11,.12);
 }
-
 /* RESULT HEADER */
 .rh { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
 .rtitle { font-family:'Syne',sans-serif; font-size:18px; font-weight:600; }
+/* ERROR */
+.err-box {
+  background:var(--red-d); border:1px solid rgba(239,68,68,.2); border-radius:var(--rl);
+  padding:16px 18px; font-size:13px; color:var(--red); line-height:1.6;
+}
 </style>
 </head>
 <body>
@@ -287,13 +239,14 @@ textarea::placeholder { color:var(--t3); }
     <div class="hdr-l">
       <div class="logo">🧠</div>
       <div>
-        <div class="brand">NeuroMatch Lite</div>
+        <div class="brand">NeuroMatch</div>
         <div class="sub">AI-powered clinical trial matching</div>
       </div>
     </div>
-    <div class="badge">BETA v0.1</div>
+    <div class="badge">BETA v0.2</div>
   </div>
 
+  <!-- INPUT PANEL -->
   <div id="input-panel">
     <div class="card">
       <div class="steps">
@@ -325,9 +278,16 @@ textarea::placeholder { color:var(--t3); }
           </label>
         </div>
       </div>
-      <div class="r2 sec">
+      <div class="r3 sec">
         <div><label class="lbl">Age</label><input type="number" id="age-input" placeholder="e.g. 34" min="18" max="99"></div>
-        <div><label class="lbl">Condition</label><input type="text" id="cond-input" placeholder="e.g. Parkinson's, MS"></div>
+        <div>
+          <label class="lbl">Gender</label>
+          <select id="gender-select">
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+          </select>
+        </div>
+        <div><label class="lbl">Condition (optional)</label><input type="text" id="cond-input" placeholder="e.g. Parkinson's, MS"></div>
       </div>
       <div class="sec">
         <label class="lbl">Audience type</label>
@@ -345,6 +305,7 @@ textarea::placeholder { color:var(--t3); }
     </div>
   </div>
 
+  <!-- LOADER PANEL -->
   <div id="loader-panel" style="display:none">
     <div class="card">
       <div class="ldr-wrap">
@@ -360,173 +321,217 @@ textarea::placeholder { color:var(--t3); }
     </div>
   </div>
 
+  <!-- RESULTS PANEL -->
   <div id="results-panel" style="display:none"></div>
 </div>
 
 <script>
-const T=[
-  {id:"NCT04819841",title:"Phase 3 Study of LRRK2 Inhibitor in Early-Stage Parkinson's Disease",phase:"Phase 3",status:"Recruiting",loc:"Istanbul, Ankara, London",score:91,el:"eligible",
-   cr:[{m:true,l:"Age 25–65",n:"Age 34 — qualifies"},{m:true,l:"Early-stage PD (H&Y I–II)",n:"Matches patient profile"},{m:true,l:"Tremor dominant subtype",n:"Right-hand tremor reported"},{m:true,l:"Medication-naive or levodopa <2 yrs",n:"No current medication"},{m:null,l:"No DBS history",n:"Not mentioned — assumed met"}],
-   reason:"Strong match: early-stage, medication-naive, tremor-dominant. Istanbul site available. Missing: formal H&Y staging documentation.",
-   steps:["Obtain formal H&Y assessment from neurologist","Request LRRK2 genetic panel"]},
-  {id:"NCT05387624",title:"High-Intensity Interval Training & Neuroplasticity in PD (HIITNP)",phase:"Phase 2",status:"Recruiting",loc:"Istanbul, Berlin, Chicago",score:88,el:"eligible",
-   cr:[{m:true,l:"PD diagnosis <5 years",n:"Diagnosed ~1 year ago"},{m:true,l:"Independent ambulation",n:"Balance issues but ambulatory"},{m:true,l:"Age 25–70",n:"Qualifies"},{m:true,l:"No cardiac contraindications",n:"Not reported — assumed none"}],
-   reason:"Very strong match. Non-pharmacological. Istanbul site. Low barrier — no imaging or genetic tests required.",
-   steps:["Obtain cardiac clearance from GP","Contact site coordinator"]},
-  {id:"NCT05102773",title:"Neuroprotection with NAD+ Precursor Supplementation in PD — RCT",phase:"Phase 2",status:"Recruiting",loc:"Ankara, Rome, Amsterdam",score:74,el:"partial",
-   cr:[{m:true,l:"Parkinson's diagnosis confirmed",n:"Diagnosed last year"},{m:true,l:"Age 30–70",n:"Age 34 — qualifies"},{m:false,l:"Dopaminergic medication",n:"Currently medication-free — not eligible"},{m:true,l:"No active infection",n:"Not reported"},{m:null,l:"MRI within 12 months",n:"Not confirmed — needs verification"}],
-   reason:"Partial match: requires at least 3 months of dopaminergic therapy. Starting medication may open eligibility.",
-   steps:["Begin dopaminergic therapy under neurologist guidance","Confirm recent brain MRI"]},
-  {id:"NCT04671927",title:"Transcranial Focused Ultrasound for Parkinson's Tremor",phase:"Phase 2/3",status:"Recruiting",loc:"Ankara, Barcelona, Toronto",score:68,el:"partial",
-   cr:[{m:true,l:"Tremor history ≥2 years",n:"2-year tremor history"},{m:false,l:"DaTscan confirmation required",n:"DaTscan status unknown"},{m:true,l:"Age 22–80",n:"Qualifies"},{m:null,l:"No implantable devices",n:"Requires confirmation"}],
-   reason:"DaTscan confirmation required. Site in Ankara may be accessible. Tremor duration matches.",
-   steps:["Schedule DaTscan imaging","Confirm no implantable devices"]},
-  {id:"NCT04290793",title:"Stem Cell-Derived Dopaminergic Neurons — Safety & Efficacy (CELLPD-1)",phase:"Phase 1",status:"Active, not recruiting",loc:"London, New York",score:22,el:"ineligible",
-   cr:[{m:false,l:"Advanced PD only (H&Y III+)",n:"Patient is early-stage"},{m:false,l:"Active recruitment open",n:"Currently not recruiting"},{m:false,l:"Age 40–70",n:"Patient is 34 — age mismatch"},{m:false,l:"Failed ≥2 medication regimens",n:"No medication history"}],
-   reason:"Not eligible: targets advanced-stage patients; recruitment closed. Not relevant at this stage.",
-   steps:[]},
-];
+const AL = {
+  patient: "Patient / Caregiver",
+  neurologist: "Neurologist",
+  gp: "General Practitioner",
+  researcher: "Researcher"
+};
 
-const AL={patient:"Patient / Caregiver",neurologist:"Neurologist",gp:"General Practitioner",researcher:"Researcher"};
-function audTxt(a){
-  const el=T.filter(t=>t.el==="eligible").length, pa=T.filter(t=>t.el==="partial").length;
-  return ({
-    patient:`Good news — you appear to qualify for ${el} trials, including one right here in Istanbul. These are research studies that may give you access to treatments before they're widely available. You don't need to decide anything now — just talk to your doctor about the options below.`,
-    neurologist:`Assessment: ${el} trials meet primary eligibility criteria (early-onset PD, medication-naïve, age 34). ${pa} trials have addressable gaps. Recommend prioritising NCT04819841 (LRRK2 inhibitor, Phase 3) and NCT05387624 (HIIT-neuroplasticity, Phase 2). DaTscan and formal H&Y staging would resolve partial eligibilities.`,
-    gp:`Your patient matches ${el} active trials, ${pa} with addressable gaps. Key actions: (1) Refer to neurology for H&Y staging, (2) Cardiac clearance for exercise trial, (3) Consider LRRK2 genetic panel. No medication changes required for top two matches.`,
-    researcher:`N=1 profile match against ClinicalTrials.gov dataset (${T.length} candidate trials). Eligibility scores via criteria intersection. Top hits: NCT04819841 (score: 91, LRRK2 pathway), NCT05387624 (score: 88, neuroplasticity). Partial matches (n=${pa}) addressable via DaTscan and medication initiation.`,
-  })[a];
+let aud = "patient";
+let _apiMatches = [];
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', (t==='text'&&i===0)||(t==='upload'&&i===1)));
+  document.getElementById('tab-text').style.display = t==='text' ? '' : 'none';
+  document.getElementById('tab-upload').style.display = t==='upload' ? '' : 'none';
 }
 
-let aud="patient", filt="all", exp={};
-
-function switchTab(t){
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(t==='text'&&i===0)||(t==='upload'&&i===1)));
-  document.getElementById('tab-text').style.display=t==='text'?'':'none';
-  document.getElementById('tab-upload').style.display=t==='upload'?'':'none';
-}
-function handleFile(i){if(i.files[0])document.getElementById('file-name').textContent=i.files[0].name;}
-function loadDemo(){
-  document.getElementById('symptom-text').value="I am 34 years old. For the past 2 years I've had tremors in my right hand that worsen at rest. I also have balance difficulties and mild fatigue. I was diagnosed with early-stage Parkinson's disease 12 months ago. Currently I'm not taking any medication. I can walk independently but have fallen twice in the past 6 months.";
-  document.getElementById('age-input').value="34";
-  document.getElementById('cond-input').value="Parkinson's Disease";
+function handleFile(i) {
+  if (i.files[0]) document.getElementById('file-name').textContent = i.files[0].name;
 }
 
-function sc(s){return s>=80?'h':s>=50?'m':'l';}
-function si(e){return e==='eligible'?'✅':e==='partial'?'🟡':'❌';}
-function mi(m){return m===true?'✅':m===false?'❌':'⬜';}
-function bc(e){return e==='eligible'?'var(--green)':e==='partial'?'var(--amber)':'var(--red)';}
+function loadDemo() {
+  document.getElementById('symptom-text').value = "I am 34 years old. For the past 2 years I've had tremors in my right hand that worsen at rest. I also have balance difficulties and mild fatigue. I was diagnosed with early-stage Parkinson's disease 12 months ago. Currently I'm not taking any medication. I can walk independently but have fallen twice in the past 6 months.";
+  document.getElementById('age-input').value = "34";
+  document.getElementById('gender-select').value = "M";
+  document.getElementById('cond-input').value = "Parkinson's Disease";
+}
 
-async function runAnalysis(){
-  aud=document.getElementById('aud-select').value;
-  document.getElementById('input-panel').style.display='none';
-  document.getElementById('loader-panel').style.display='block';
-  const msgs=["Analyzing symptoms...","Querying ClinicalTrials.gov...","Scoring eligibility criteria...","Adapting for audience..."];
-  let i=0;
-  const iv=setInterval(()=>{
+async function runAnalysis() {
+  aud = document.getElementById('aud-select').value;
+  document.getElementById('input-panel').style.display = 'none';
+  document.getElementById('loader-panel').style.display = 'block';
+
+  const msgs = ["Analyzing symptoms...", "Querying ClinicalTrials.gov...", "Scoring eligibility criteria...", "Adapting for audience..."];
+  let i = 0;
+  const iv = setInterval(() => {
     document.getElementById('d'+i)?.classList.remove('act');
-    i=(i+1)%4;
+    i = (i+1) % 4;
     document.getElementById('d'+i)?.classList.add('act');
-    document.getElementById('ldr-txt').textContent=msgs[i];
-  },850);
-  await new Promise(r=>setTimeout(r,3400));
-  clearInterval(iv);
-  document.getElementById('loader-panel').style.display='none';
-  renderResults();
+    document.getElementById('ldr-txt').textContent = msgs[i];
+  }, 850);
+
+  const symptomText = document.getElementById('symptom-text').value.trim();
+  const age = parseInt(document.getElementById('age-input').value) || 50;
+  const gender = document.getElementById('gender-select').value;
+  const cond = document.getElementById('cond-input').value.trim();
+
+  // Parse symptom text into list
+  const symptoms = symptomText
+    .split(/[.,;\n]/)
+    .map(s => s.trim())
+    .filter(s => s.length > 4)
+    .slice(0, 8);
+
+  try {
+    const response = await fetch('http://localhost:8000/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        patient_id: 'web_' + Date.now(),
+        age: age,
+        gender: gender,
+        symptoms: symptoms.length ? symptoms : [symptomText],
+        duration: 'Unknown',
+        existing_conditions: cond ? [cond] : [],
+        medications: [],
+        audience: aud
+      })
+    });
+
+    clearInterval(iv);
+    document.getElementById('loader-panel').style.display = 'none';
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.detail || 'API error ' + response.status);
+    }
+
+    const data = await response.json();
+    _apiMatches = data.top_matches || [];
+    renderResultsFromAPI(data);
+
+  } catch (err) {
+    clearInterval(iv);
+    document.getElementById('loader-panel').style.display = 'none';
+    document.getElementById('input-panel').style.display = 'block';
+    alert('Could not connect to NeuroMatch API.\n\nMake sure the backend is running:\n  python api.py\n\nError: ' + err.message);
+  }
 }
 
-function renderResults(){
-  const el=T.filter(t=>t.el==='eligible').length, pa=T.filter(t=>t.el==='partial').length, inel=T.filter(t=>t.el==='ineligible').length;
-  const top=Math.max(...T.map(t=>t.score));
-  const p=document.getElementById('results-panel');
-  p.style.display='block';
-  p.innerHTML=`<div class="card">
+function renderResultsFromAPI(data) {
+  const el = data.likely_eligible || 0;
+  const pa = data.needs_more_info || 0;
+  const inel = data.likely_ineligible || 0;
+  const matches = data.top_matches || [];
+  const top = matches.length ? Math.round(Math.max(...matches.map(t => t.confidence)) * 100) : 0;
+  const diagnoses = data.diagnosis || [];
+
+  const p = document.getElementById('results-panel');
+  p.style.display = 'block';
+
+  // Build diagnosis rows
+  const diagRows = diagnoses.slice(0, 3).map(d => {
+    const pct = Math.round(d.confidence * 100);
+    return `<div class="drow">
+      <div class="dname">${d.disease}</div>
+      <div class="dbar-wrap"><div class="dbar-bg"><div class="dbar-fill" style="width:${pct}%"></div></div></div>
+      <div class="dpct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  p.innerHTML = `<div class="card">
     <div class="rh">
       <div class="rtitle">Match results</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-g btn-sm" onclick="resetForm()">← New search</button>
-        <button class="btn btn-g btn-sm" onclick="exportReport()">↓ Export</button>
       </div>
     </div>
+
+    <!-- Stats -->
     <div class="sgrid">
-      <div class="stat"><div class="slbl">Trials checked</div><div class="sval">${T.length}</div></div>
+      <div class="stat"><div class="slbl">Trials checked</div><div class="sval">${data.trials_analyzed || 0}</div></div>
       <div class="stat"><div class="slbl">Eligible</div><div class="sval g">${el}</div></div>
-      <div class="stat"><div class="slbl">Partial match</div><div class="sval a">${pa}</div></div>
+      <div class="stat"><div class="slbl">Needs info</div><div class="sval a">${pa}</div></div>
       <div class="stat"><div class="slbl">Top score</div><div class="sval b">${top}%</div></div>
     </div>
+
+    <!-- Diagnosis -->
+    ${diagRows ? `<div style="margin-bottom:1rem">
+      <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Preliminary Diagnosis</div>
+      <div class="dbox">${diagRows}</div>
+    </div>` : ''}
+
+    <!-- Audience summary -->
     <div class="abox">
       <div class="atop"><span class="albl">Summary for</span><span class="abadge">${AL[aud]}</span></div>
-      <div class="atxt">${audTxt(aud)}</div>
+      <div class="atxt">${data.diagnosis_text || ''}</div>
     </div>
+
+    <!-- Filter -->
     <div class="frow">
       <span class="flbl">Filter</span>
-      <button class="fbtn act" data-f="all" onclick="setFilt('all')">All (${T.length})</button>
-      <button class="fbtn" data-f="eligible" onclick="setFilt('eligible')">✅ Eligible (${el})</button>
-      <button class="fbtn" data-f="partial" onclick="setFilt('partial')">🟡 Partial (${pa})</button>
-      <button class="fbtn" data-f="ineligible" onclick="setFilt('ineligible')">❌ Ineligible (${inel})</button>
+      <button class="fbtn act" data-f="all" onclick="setFiltAPI('all')">All (${matches.length})</button>
+      <button class="fbtn" data-f="eligible" onclick="setFiltAPI('eligible')">✅ Eligible (${el})</button>
+      <button class="fbtn" data-f="partial" onclick="setFiltAPI('partial')">🟡 Needs info (${pa})</button>
+      <button class="fbtn" data-f="ineligible" onclick="setFiltAPI('ineligible')">❌ Ineligible (${inel})</button>
     </div>
-    <div id="tlist"></div>
-    <div class="disc">⚠️ NeuroMatch Lite is not a medical diagnostic tool. Results are based on self-reported information and mock data. Always consult a qualified neurologist before enrolling in any clinical trial.</div>
+
+    <div id="tlist">${renderTrialCardsAPI(matches, 'all')}</div>
+
+    <div class="disc">⚠️ NeuroMatch is not a medical diagnostic tool. Results are AI-generated and may not be accurate. Always consult a qualified neurologist before enrolling in any clinical trial.</div>
   </div>`;
-  renderTrials();
 }
 
-function setFilt(f){
-  filt=f;
-  document.querySelectorAll('.fbtn').forEach(b=>b.classList.toggle('act',b.dataset.f===f));
-  renderTrials();
-}
+function renderTrialCardsAPI(matches, filter) {
+  const shown = filter === 'all' ? matches : matches.filter(t => {
+    if (filter === 'eligible') return t.overall_status === 'likely_eligible';
+    if (filter === 'partial') return t.overall_status === 'needs_more_info';
+    if (filter === 'ineligible') return t.overall_status === 'likely_ineligible';
+    return true;
+  });
 
-function renderTrials(){
-  const list=document.getElementById('tlist');
-  const shown=filt==='all'?T:T.filter(t=>t.el===filt);
-  list.innerHTML=shown.map((t,idx)=>{
-    const isOpen=exp[t.id];
-    const cr=t.cr.map(c=>`<div class="cr"><span class="ci">${mi(c.m)}</span><span><strong>${c.l}</strong> — ${c.n}</span></div>`).join('');
-    const steps=t.steps.length?`<div style="margin-top:10px"><strong>To improve eligibility:</strong><ul style="padding-left:16px;margin-top:6px">${t.steps.map(s=>`<li>${s}</li>`).join('')}</ul></div>`:'';
-    return `<div class="tc ${t.el}" style="animation-delay:${idx*.07}s">
+  if (!shown.length) return '<div style="text-align:center;padding:2rem;color:var(--t3);font-size:13px">No trials in this category.</div>';
+
+  return shown.map((t, idx) => {
+    const pct = Math.round((t.confidence || 0) * 100);
+    const elClass = t.overall_status === 'likely_eligible' ? 'eligible' : t.overall_status === 'needs_more_info' ? 'partial' : 'ineligible';
+    const icon = t.overall_status === 'likely_eligible' ? '✅' : t.overall_status === 'needs_more_info' ? '🟡' : '❌';
+    const scoreClass = pct >= 80 ? 'h' : pct >= 50 ? 'm' : 'l';
+    const color = t.overall_status === 'likely_eligible' ? 'var(--green)' : t.overall_status === 'needs_more_info' ? 'var(--amber)' : 'var(--red)';
+
+    const strengths = (t.strengths || []).map(s =>
+      `<div class="cr"><span class="ci">✅</span><span>${s}</span></div>`
+    ).join('');
+
+    const gaps = (t.gaps || []).map(g =>
+      `<div class="cr"><span class="ci">⚠️</span><span><strong>${g.criterion}</strong>${g.explanation ? ' — ' + g.explanation : ''}${g.action ? '<br><span style="color:var(--blue);font-size:11px">→ ' + g.action + '</span>' : ''}</span></div>`
+    ).join('');
+
+    const nctUrl = `https://clinicaltrials.gov/study/${t.trial_id}`;
+
+    return `<div class="tc ${elClass}" style="animation-delay:${idx * .07}s">
       <div class="th">
-        <span class="ti">${si(t.el)}</span>
-        <span class="tt">${t.title}</span>
-        <span class="ts ${sc(t.score)}">${t.score}%</span>
+        <span class="ti">${icon}</span>
+        <span class="tt">${t.trial_title}</span>
+        <span class="ts ${scoreClass}">${pct}%</span>
       </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${t.score}%;background:${bc(t.el)}"></div></div>
+      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
       <div class="tmeta">
-        <span>📍 ${t.loc.split(',')[0]}</span>
-        <span>🔬 ${t.phase}</span>
-        <span>📋 ${t.status}</span>
-        <span class="tid">${t.id}</span>
+        <span>🎯 ${t.matched_condition}</span>
+        <span class="tid"><a href="${nctUrl}" target="_blank" style="color:var(--blue);text-decoration:none">${t.trial_id}</a></span>
       </div>
-      <div class="crit">${cr}</div>
-      <button class="exbtn" onclick="toggleExp('${t.id}')">${isOpen?'▲ Hide details':'▼ Show reasoning & next steps'}</button>
-      <div class="rsn ${isOpen?'open':''}" id="r-${t.id}">${t.reason}${steps}</div>
+      ${strengths || gaps ? `<div class="crit">${strengths}${gaps}</div>` : ''}
+      ${t.summary_patient ? `<div style="margin-top:10px;font-size:13px;color:var(--t2);line-height:1.6;padding-top:10px;border-top:1px solid var(--b1)">${t.summary_patient}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-function toggleExp(id){
-  exp[id]=!exp[id];
-  renderTrials();
+function setFiltAPI(f) {
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('act', b.dataset.f === f));
+  document.getElementById('tlist').innerHTML = renderTrialCardsAPI(_apiMatches, f);
 }
 
-function resetForm(){
-  document.getElementById('results-panel').style.display='none';
-  document.getElementById('input-panel').style.display='block';
-  exp={};
-}
-
-function exportReport(){
-  const el=T.filter(t=>t.el==='eligible').length, pa=T.filter(t=>t.el==='partial').length;
-  let c=`NEUROMATCH LITE — CLINICAL TRIAL MATCH REPORT\nGenerated: ${new Date().toLocaleDateString()} | Audience: ${AL[aud]}\n\nSUMMARY\nTrials: ${T.length} | Eligible: ${el} | Partial: ${pa} | Ineligible: ${T.length-el-pa}\n\nAUDIENCE SUMMARY\n${audTxt(aud)}\n\nTRIAL DETAILS\n${'─'.repeat(60)}\n`;
-  T.forEach(t=>{
-    c+=`\n[${t.score}%] ${t.title}\nID: ${t.id} | ${t.phase} | ${t.status}\nLocation: ${t.loc}\nStatus: ${t.el.toUpperCase()}\nCriteria:\n`;
-    t.cr.forEach(cr=>c+=`  [${cr.m===true?'YES':cr.m===false?'NO':'?'}] ${cr.l}: ${cr.n}\n`);
-    if(t.steps.length){c+=`Next steps:\n`;t.steps.forEach(s=>c+=`  - ${s}\n`);}
-  });
-  c+=`\nDISCLAIMER\nNeuroMatch Lite is not a medical diagnostic tool. Always consult a neurologist.\n`;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([c],{type:'text/plain'}));
-  a.download='neuromatch-report.txt'; a.click();
+function resetForm() {
+  document.getElementById('results-panel').style.display = 'none';
+  document.getElementById('input-panel').style.display = 'block';
+  _apiMatches = [];
 }
 </script>
 </body>
