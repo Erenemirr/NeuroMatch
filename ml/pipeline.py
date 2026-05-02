@@ -26,7 +26,7 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     """
 
     print("\n" + "="*60)
-    print("🧠 NeuroMatch Pipeline Starting")
+    print("NeuroMatch Pipeline Starting")
     print("="*60)
 
     # ── STEP 0: Parse uploaded report (if any) ──
@@ -34,7 +34,7 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     if report_text and len(str(report_text).strip()) > 50:
         print("\n[Step 0] Parsing uploaded medical report...")
         patient_profile = enrich_profile_from_report(patient_profile, report_text=report_text)
-        print(f"  ✅ Report parsed: {len(patient_profile.get('symptoms', []))} symptoms extracted")
+        print(f"  [OK] Report parsed: {len(patient_profile.get('symptoms', []))} symptoms extracted")
 
     # ── STEP 0: Validate patient input ──
     print("\n[Step 0] Validating patient profile...")
@@ -44,7 +44,7 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
             "error": "Invalid patient profile",
             "issues": issues
         }
-    print(f"  ✅ Patient profile valid")
+    print(f"  [OK] Patient profile valid")
 
     # ── STEP 1: Generate diagnosis ──
     print("\n[Step 1] Generating neurological diagnosis...")
@@ -55,8 +55,8 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
         return {"error": f"Diagnosis failed: {diagnosis_result['error']}"}
 
     diagnoses = patient_profile.get("predicted_diagnosis", [])
-    print(f"  ✅ Top diagnosis: {diagnoses[0]['disease'] if diagnoses else 'Unknown'} "
-          f"({int(diagnoses[0]['confidence'] * 100)}% confidence)" if diagnoses else "  ✅ Diagnosis complete")
+    print(f"  [OK] Top diagnosis: {diagnoses[0]['disease'] if diagnoses else 'Unknown'} "
+          f"({int(diagnoses[0]['confidence'] * 100)}% confidence)" if diagnoses else "  [OK] Diagnosis complete")
 
     # ── STEP 1.5: Enrich with OASIS-2 data ──
     print("\n[Step 1.5] Enriching patient profile with OASIS-2 clinical data...")
@@ -64,10 +64,10 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     oasis = patient_profile.get("oasis_estimates", {})
     if oasis.get("available"):
         mmse_range = oasis["mmse"]["estimated_range"]
-        print(f"  ✅ OASIS-2: estimated MMSE {mmse_range[0]}–{mmse_range[1]}, "
+        print(f"  [OK] OASIS-2: estimated MMSE {mmse_range[0]}–{mmse_range[1]}, "
               f"CDR {oasis['cdr']['most_common']} (n={oasis['sample_size']})")
     else:
-        print(f"  ⚠️  OASIS-2 not available: {oasis.get('reason', 'unknown')}")
+        print(f"  [WARN] OASIS-2 not available: {oasis.get('reason', 'unknown')}")
 
     # ── STEP 2: Fetch clinical trials ──
     print("\n[Step 2] Fetching clinical trials from ClinicalTrials.gov...")
@@ -83,17 +83,17 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
             "message": "No recruiting trials found for your condition at this time."
         }
 
-    print(f"  ✅ Fetched {len(trials)} trials")
+    print(f"  [OK] Fetched {len(trials)} trials")
 
     # ── STEP 3: Parse eligibility criteria ──
     print("\n[Step 3] Parsing eligibility criteria with LLM...")
     enriched_trials = await parse_trials_batch(trials)
-    print(f"  ✅ Parsed eligibility for {len(enriched_trials)} trials")
+    print(f"  [OK] Parsed eligibility for {len(enriched_trials)} trials")
 
     # ── STEP 4: Validate parsed criteria ──
     print("\n[Step 4] Validating parsed criteria...")
     validated_trials = validate_trials_batch(enriched_trials)
-    print(f"  ✅ Validation complete")
+    print(f"  [OK] Validation complete")
 
     # ── STEP 5: Gap analysis ──
     print("\n[Step 5] Analyzing eligibility gaps...")
@@ -103,13 +103,13 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     needs_info = [g for g in gap_results if g["overall_status"] == "needs_more_info"]
     ineligible = [g for g in gap_results if g["overall_status"] == "likely_ineligible"]
 
-    print(f"  ✅ {len(eligible)} likely eligible, {len(needs_info)} need more info, {len(ineligible)} likely ineligible")
+    print(f"  [OK] {len(eligible)} likely eligible, {len(needs_info)} need more info, {len(ineligible)} likely ineligible")
 
     # ── STEP 6: Format diagnosis output ──
     diagnosis_formatted = format_diagnosis_output(diagnosis_result, audience)
 
     print("\n" + "="*60)
-    print("✅ NeuroMatch Pipeline Complete")
+    print("NeuroMatch Pipeline Complete")
     print("="*60)
 
     # ── STEP 7: Format OASIS summary ──
@@ -139,25 +139,25 @@ def format_pipeline_output(result: dict) -> str:
     Formats the full pipeline result for display.
     """
     if "error" in result:
-        return f"❌ Error: {result['error']}\n" + "\n".join(result.get("issues", []))
+        return f"[ERROR] Error: {result['error']}\n" + "\n".join(result.get("issues", []))
 
     output = []
     output.append("=" * 60)
-    output.append("🧠 NeuroMatch Results")
+    output.append("NeuroMatch Results")
     output.append("=" * 60)
 
     # Diagnosis section
-    output.append("\n📋 DIAGNOSIS\n")
+    output.append("\nDIAGNOSIS\n")
     output.append(result.get("diagnosis_formatted", ""))
 
     # Trial matches
-    output.append("\n\n🔬 CLINICAL TRIAL MATCHES\n")
+    output.append("\n\nCLINICAL TRIAL MATCHES\n")
     output.append(f"Analyzed {result['trials_analyzed']} recruiting trials\n")
 
     summary = result.get("summary", {})
-    output.append(f"  ✅ Likely eligible: {summary.get('likely_eligible', 0)}")
-    output.append(f"  ❓ Needs more info: {summary.get('needs_more_info', 0)}")
-    output.append(f"  ❌ Likely ineligible: {summary.get('likely_ineligible', 0)}")
+    output.append(f"  [OK] Likely eligible: {summary.get('likely_eligible', 0)}")
+    output.append(f"  [?] Needs more info: {summary.get('needs_more_info', 0)}")
+    output.append(f"  [X] Likely ineligible: {summary.get('likely_ineligible', 0)}")
 
     # Top matches
     gap_analysis = result.get("gap_analysis", [])
@@ -167,14 +167,14 @@ def format_pipeline_output(result: dict) -> str:
         output.append("\n\n🏆 TOP TRIAL MATCHES\n")
         for i, gap in enumerate(top_trials, 1):
             llm = gap.get("llm_analysis", {})
-            status_icon = "✅" if gap["overall_status"] == "likely_eligible" else "❓"
+            status_icon = "[OK]" if gap["overall_status"] == "likely_eligible" else "[?]"
             output.append(f"{i}. {status_icon} {gap['trial_title'][:70]}")
             output.append(f"   NCT ID: {gap['trial_id']} | Confidence: {int(gap['confidence'] * 100)}%")
             output.append(f"   {llm.get('summary_patient', '')}")
 
             gaps = llm.get("gaps", [])
             if gaps:
-                output.append(f"   ⚠️  Gaps: {', '.join([g['criterion'] for g in gaps[:2]])}")
+                output.append(f"   [WARN] Gaps: {', '.join([g['criterion'] for g in gaps[:2]])}")
             output.append("")
 
     return "\n".join(output)

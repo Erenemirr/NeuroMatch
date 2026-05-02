@@ -248,4 +248,6 @@ async def get_conditions():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
+    # Using 127.0.0.1 for better compatibility on Windows local machines
+    # reload=False because heavy model loading during startup can interfere with the reloader's handshake
+    uvicorn.run("api:app", host="127.0.0.1", port=8000, reload=False)
