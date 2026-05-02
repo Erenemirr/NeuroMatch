@@ -15,7 +15,27 @@ client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 # ── CACHES ──
 TRIAL_CACHE = {}
-ELIGIBILITY_CACHE = {}
+
+# Persistent Cache for Eligibility
+_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".eligibility_cache.json")
+
+def _load_cache() -> dict:
+    try:
+        if os.path.exists(_CACHE_PATH):
+            with open(_CACHE_PATH, "r") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+def _save_cache(cache: dict):
+    try:
+        with open(_CACHE_PATH, "w") as f:
+            json.dump(cache, f, indent=2)
+    except Exception:
+        pass
+
+ELIGIBILITY_CACHE = _load_cache()
 
 CLINICALTRIALS_BASE = "https://clinicaltrials.gov/api/v2/studies"
 
@@ -128,6 +148,31 @@ async def fetch_trials_for_diagnoses(diagnoses: list, max_per_condition: int = 5
 
 # ── SECTION 2: LLM Eligibility Parser ──
 
+def _smart_truncate(criteria_text: str, max_chars: int = 2000) -> str:
+    """
+    Balanced truncation: keeps parts of both inclusion and exclusion sections.
+    """
+    if len(criteria_text) <= max_chars:
+        return criteria_text
+
+    text_lower = criteria_text.lower()
+    excl_markers = ["exclusion criteria", "exclusion:", "exclude:", "ineligible if"]
+    excl_idx = -1
+    for marker in excl_markers:
+        idx = text_lower.find(marker)
+        if idx > 0:
+            excl_idx = idx
+            break
+
+    if excl_idx > 0:
+        half = max_chars // 2
+        inclusion_part = criteria_text[:excl_idx][:half]
+        exclusion_part = criteria_text[excl_idx:][:half]
+        return inclusion_part + "\n" + exclusion_part
+    else:
+        return criteria_text[:max_chars]
+
+
 ELIGIBILITY_PARSE_PROMPT = """
 You are a clinical trial eligibility expert. Parse the following eligibility criteria text
 and extract structured inclusion and exclusion criteria.
@@ -167,11 +212,15 @@ async def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> 
     if not criteria_text or len(criteria_text.strip()) < 20:
         return {"inclusion_criteria": [], "exclusion_criteria": []}
 
+    # Persistent Cache Check
     if trial_id in ELIGIBILITY_CACHE:
-        print(f"[INFO] Using cached parsed criteria for {trial_id}")
+        print(f"[CACHE] Using cached parsed criteria for {trial_id}")
         return ELIGIBILITY_CACHE[trial_id]
 
+    truncated_text = _smart_truncate(criteria_text, max_chars=3000)
+
     try:
+        # Retry loop for 429 errors
         for attempt in range(3):
             try:
                 response = await client.chat.completions.create(
@@ -184,7 +233,7 @@ async def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> 
                         {
                             "role": "user",
                             "content": ELIGIBILITY_PARSE_PROMPT.format(
-                                criteria_text=criteria_text[:3000]
+                                criteria_text=truncated_text
                             )
                         }
                     ],
@@ -203,67 +252,31 @@ async def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> 
         parsed = json.loads(raw)
         print(f"[INFO] Parsed {len(parsed.get('inclusion_criteria', []))} inclusion + "
               f"{len(parsed.get('exclusion_criteria', []))} exclusion criteria for {trial_id}")
+        
+        # Save to persistent cache
         ELIGIBILITY_CACHE[trial_id] = parsed
+        _save_cache(ELIGIBILITY_CACHE)
+        
         return parsed
 
     except json.JSONDecodeError as e:
-        print(f"[ERROR] JSON parse failed for {trial_id}: {e}")
-        return {"inclusion_criteria": [], "exclusion_criteria": []}
+        print(f"[ERROR] Failed to parse LLM JSON for {trial_id}: {e}")
+        return {"inclusion_criteria": [], "exclusion_criteria": [], "error": "JSON parse error"}
     except Exception as e:
         print(f"[ERROR] LLM parsing failed for {trial_id}: {e}")
-        return {"inclusion_criteria": [], "exclusion_criteria": []}
+        return {"inclusion_criteria": [], "exclusion_criteria": [], "error": str(e)}
 
 
 async def parse_trials_batch(trials: list) -> list:
-    # Limit concurrency to 2 to prevent hitting Groq free tier rate limits
-    sem = asyncio.Semaphore(2)
-
-    async def process_trial(trial):
-        async with sem:
-            # Small sleep to prevent burst rate limits
-            await asyncio.sleep(0.5)
-            raw_criteria = trial.get("eligibility_criteria_raw", "")
-            parsed = await parse_eligibility_with_llm(raw_criteria, trial.get("nct_id", ""))
-            trial["parsed_eligibility"] = parsed
+    semaphore = asyncio.Semaphore(2)
+    
+    async def limited_parse(trial):
+        async with semaphore:
+            trial_id = trial.get("nct_id", "")
+            raw_text = trial.get("eligibility_criteria_raw", "")
+            parsed = await parse_eligibility_with_llm(raw_text, trial_id)
+            trial["eligibility_parsed"] = parsed
             return trial
 
-    tasks = [process_trial(t) for t in trials]
-    enriched = await asyncio.gather(*tasks)
-    return list(enriched)
-
-
-# ── TEST ──
-
-if __name__ == "__main__":
-    print("\n" + "="*50)
-    print("TEST 1: Fetching Alzheimer Trials")
-    print("="*50)
-
-    trials = fetch_trials("Alzheimer's Disease", max_results=3)
-
-    for i, trial in enumerate(trials):
-        print(f"\n[Trial {i+1}] {trial['nct_id']}")
-        print(f"  Title: {trial['title'][:80]}")
-        print(f"  Phase: {trial['phase']}")
-        print(f"  Age: {trial['min_age']} - {trial['max_age']}")
-        print(f"  Locations: {trial['locations'][:2]}")
-
-    print("\n" + "="*50)
-    print("TEST 2: Parsing Eligibility Criteria")
-    print("="*50)
-
-    if trials:
-        first_trial = trials[0]
-        print(f"\nParsing criteria for: {first_trial['nct_id']}")
-        parsed = parse_eligibility_with_llm(
-            first_trial["eligibility_criteria_raw"],
-            first_trial["nct_id"]
-        )
-
-        print(f"\nInclusion Criteria ({len(parsed.get('inclusion_criteria', []))}):")
-        for c in parsed.get("inclusion_criteria", [])[:3]:
-            print(f"  + [{c['type']}] {c['criterion'][:80]}")
-
-        print(f"\nExclusion Criteria ({len(parsed.get('exclusion_criteria', []))}):")
-        for c in parsed.get("exclusion_criteria", [])[:3]:
-            print(f"  - [{c['type']}] {c['criterion'][:80]}")
+    tasks = [limited_parse(t) for t in trials]
+    return await asyncio.gather(*tasks)

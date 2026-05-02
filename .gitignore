@@ -1,4 +1,19 @@
+# Datasets - too large for GitHub
+data/datasets/
+
+# Environment
 .env
+
+# Python
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# System
+node_modules/
+.DS_Store*.pdf
+pipeline_test_output.json
+ml/pipeline_test_output.json
+ml/.eligibility_cache.json
+*.pdf
+ml/pipeline_test_output.json

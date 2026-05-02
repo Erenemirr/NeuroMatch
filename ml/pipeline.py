@@ -9,6 +9,8 @@ from diagnosis import generate_diagnosis, load_symptom_dataset, format_diagnosis
 from parser import fetch_trials_for_diagnoses, parse_trials_batch
 from validator import validate_trials_batch, validate_patient_profile
 from gap_explainer import analyze_all_trials
+from oasis_estimator import enrich_patient_with_oasis, format_oasis_summary
+from report_parser import enrich_profile_from_report
 
 
 async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
@@ -26,6 +28,13 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     print("\n" + "="*60)
     print("🧠 NeuroMatch Pipeline Starting")
     print("="*60)
+
+    # ── STEP 0: Parse uploaded report (if any) ──
+    report_text = patient_profile.get("report_text")
+    if report_text and len(str(report_text).strip()) > 50:
+        print("\n[Step 0] Parsing uploaded medical report...")
+        patient_profile = enrich_profile_from_report(patient_profile, report_text=report_text)
+        print(f"  ✅ Report parsed: {len(patient_profile.get('symptoms', []))} symptoms extracted")
 
     # ── STEP 0: Validate patient input ──
     print("\n[Step 0] Validating patient profile...")
@@ -48,6 +57,17 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     diagnoses = patient_profile.get("predicted_diagnosis", [])
     print(f"  ✅ Top diagnosis: {diagnoses[0]['disease'] if diagnoses else 'Unknown'} "
           f"({int(diagnoses[0]['confidence'] * 100)}% confidence)" if diagnoses else "  ✅ Diagnosis complete")
+
+    # ── STEP 1.5: Enrich with OASIS-2 data ──
+    print("\n[Step 1.5] Enriching patient profile with OASIS-2 clinical data...")
+    patient_profile = enrich_patient_with_oasis(patient_profile)
+    oasis = patient_profile.get("oasis_estimates", {})
+    if oasis.get("available"):
+        mmse_range = oasis["mmse"]["estimated_range"]
+        print(f"  ✅ OASIS-2: estimated MMSE {mmse_range[0]}–{mmse_range[1]}, "
+              f"CDR {oasis['cdr']['most_common']} (n={oasis['sample_size']})")
+    else:
+        print(f"  ⚠️  OASIS-2 not available: {oasis.get('reason', 'unknown')}")
 
     # ── STEP 2: Fetch clinical trials ──
     print("\n[Step 2] Fetching clinical trials from ClinicalTrials.gov...")
@@ -92,6 +112,10 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
     print("✅ NeuroMatch Pipeline Complete")
     print("="*60)
 
+    # ── STEP 7: Format OASIS summary ──
+    oasis_estimates = patient_profile.get("oasis_estimates", {})
+    oasis_summary = format_oasis_summary(oasis_estimates, audience) if oasis_estimates.get("available") else ""
+
     return {
         "patient_id": patient_profile.get("patient_id", "unknown"),
         "audience": audience,
@@ -99,6 +123,8 @@ async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> di
         "diagnosis_formatted": diagnosis_formatted,
         "trials_analyzed": len(gap_results),
         "gap_analysis": gap_results,
+        "oasis_estimates": oasis_estimates,
+        "oasis_summary": oasis_summary,
         "summary": {
             "likely_eligible": len(eligible),
             "needs_more_info": len(needs_info),

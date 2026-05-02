@@ -6,28 +6,22 @@ Replaces the placeholder logic in the backend's main.py.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import sys
 import os
+import tempfile
 
 # Add ml directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "ml"))
 
+from pipeline import run_neuromatch, format_pipeline_output
 try:
-    from pipeline import run_neuromatch, format_pipeline_output
-except ImportError as e:
-    # Fallback if ml/pipeline.py is not yet created
-    error_msg = str(e)
-    print(f"IMPORT ERROR: {error_msg}")
-    import traceback
-    traceback.print_exc()
-    async def run_neuromatch(p, audience="patient"): return {"error": f"ML Pipeline error: {error_msg}"}
-    def format_pipeline_output(r): return r
-
-from src.pdf_generator import generate_pdf_report
-from fastapi.responses import FileResponse
-import tempfile
+    from report_generator import generate_neuromatch_report
+except ImportError:
+    # Fallback to the old generator if teammate's file is missing or in different place
+    from src.pdf_generator import generate_pdf_report as generate_neuromatch_report
 
 app = FastAPI(
     title="NeuroMatch API",
@@ -133,11 +127,9 @@ async def analyze(request: PatientRequest):
     try:
         result = await run_neuromatch(patient_profile, audience=request.audience)
     except Exception as e:
-        print(f"PIPELINE CRASH: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
     if "error" in result:
-        print(f"PIPELINE ERROR: {result['error']}")
         raise HTTPException(status_code=400, detail=result["error"])
 
     # Extract top 5 matches (exclude likely_ineligible from top display)
@@ -191,27 +183,47 @@ async def analyze(request: PatientRequest):
     )
 
 
-@app.get("/export")
-async def export_report(
-    trial_title: str, 
-    match_score: float, 
-    summary: str, 
-    patient_summary: str
-):
-    """Generates a PDF report for the patient to share with their doctor."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-        generate_pdf_report(
-            tmp.name,
-            patient_summary,
-            trial_title,
-            match_score,
-            summary
-        )
+@app.post("/report")
+async def generate_report(request: PatientRequest):
+    """
+    Runs the full pipeline and returns a downloadable PDF report.
+    """
+    patient_profile = {
+        "patient_id": request.patient_id,
+        "symptoms": request.symptoms,
+        "duration": request.duration,
+        "age": request.age,
+        "gender": request.gender,
+        "existing_conditions": request.existing_conditions or [],
+        "medications": request.medications or [],
+        "report_text": request.report_text,
+        "predicted_diagnosis": [],
+        "matched_trials": []
+    }
+
+    try:
+        # Must await the async run_neuromatch
+        result = await run_neuromatch(patient_profile, audience=request.audience)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    # Generate PDF to a temp file
+    try:
+        fd, pdf_path = tempfile.mkstemp(suffix=".pdf")
+        os.close(fd)
+        generate_neuromatch_report(result, pdf_path, audience=request.audience)
+        patient_id = request.patient_id or "anonymous"
+        filename = f"NeuroMatch_Report_{patient_id}.pdf"
         return FileResponse(
-            tmp.name, 
-            media_type="application/pdf", 
-            filename=f"NeuroMatch_Report_{trial_title[:20]}.pdf"
+            pdf_path,
+            media_type="application/pdf",
+            filename=filename
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation error: {str(e)}")
 
 
 @app.get("/conditions")
