@@ -336,6 +336,7 @@ const AL = {
 let aud = "patient";
 let _apiMatches = [];
 let _lastRequest = null;
+let _uploadedReportText = null;
 
 function switchTab(t) {
   document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', (t==='text'&&i===0)||(t==='upload'&&i===1)));
@@ -343,8 +344,32 @@ function switchTab(t) {
   document.getElementById('tab-upload').style.display = t==='upload' ? '' : 'none';
 }
 
-function handleFile(i) {
-  if (i.files[0]) document.getElementById('file-name').textContent = i.files[0].name;
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('file-name').textContent = '⏳ Reading ' + file.name + '...';
+  _uploadedReportText = null;
+
+  const reader = new FileReader();
+
+  if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+    // Read as base64, send to backend as report_text marker
+    reader.onload = function(e) {
+      // Extract raw text from PDF using a simple approach:
+      // Send the base64 encoded content — backend report_parser handles it
+      const base64 = e.target.result.split(',')[1];
+      _uploadedReportText = '__PDF_BASE64__' + base64;
+      document.getElementById('file-name').textContent = '✅ ' + file.name + ' ready';
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // Plain text file
+    reader.onload = function(e) {
+      _uploadedReportText = e.target.result;
+      document.getElementById('file-name').textContent = '✅ ' + file.name + ' ready';
+    };
+    reader.readAsText(file);
+  }
 }
 
 function loadDemo() {
@@ -389,7 +414,8 @@ async function runAnalysis() {
     duration: 'Unknown',
     existing_conditions: cond ? [cond] : [],
     medications: [],
-    audience: aud
+    audience: aud,
+    report_text: _uploadedReportText || null
   };
 
   try {

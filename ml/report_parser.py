@@ -223,7 +223,24 @@ def enrich_profile_from_report(patient_profile: dict, report_text: str = None,
     Returns:
         Enriched patient profile
     """
-    # Get text
+    # Handle base64 encoded PDF from frontend
+    if report_text and report_text.startswith('__PDF_BASE64__'):
+        try:
+            import base64
+            import tempfile
+            pdf_data = base64.b64decode(report_text[len('__PDF_BASE64__'):])
+            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+                tmp.write(pdf_data)
+                tmp_path = tmp.name
+            print(f"[PARSER] Decoded base64 PDF, extracting text...")
+            report_text = extract_text_from_pdf(tmp_path)
+            import os as _os
+            _os.unlink(tmp_path)
+        except Exception as e:
+            print(f"[PARSER] Base64 PDF decode failed: {e}")
+            report_text = None
+
+    # Get text from file path if needed
     if report_path and not report_text:
         report_text = extract_text_from_file(report_path)
 
