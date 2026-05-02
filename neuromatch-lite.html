@@ -580,23 +580,17 @@ function resetForm(){
 }
 
 function exportReport(){
-  if (T.length === 0) {
-    alert("No trials to export.");
-    return;
-  }
-  
-  // Grab the highest scoring trial
-  const best = T[0];
-
-  const params = new URLSearchParams({
-    trial_title: best.title,
-    match_score: best.score,
-    summary: best.reason,
-    patient_summary: globalDiagnosisText
+  const el=T.filter(t=>t.el==='eligible').length, pa=T.filter(t=>t.el==='partial').length;
+  let c=`NEUROMATCH LITE — CLINICAL TRIAL MATCH REPORT\nGenerated: ${new Date().toLocaleDateString()} | Audience: ${AL[aud]}\n\nSUMMARY\nTrials: ${T.length} | Eligible: ${el} | Partial: ${pa} | Ineligible: ${T.length-el-pa}\n\nAUDIENCE SUMMARY\n${audTxt(aud)}\n\nTRIAL DETAILS\n${'─'.repeat(60)}\n`;
+  T.forEach(t=>{
+    c+=`\n[${t.score}%] ${t.title}\nID: ${t.id} | ${t.phase} | ${t.status}\nLocation: ${t.loc}\nStatus: ${t.el.toUpperCase()}\nCriteria:\n`;
+    t.cr.forEach(cr=>c+=`  [${cr.m===true?'YES':cr.m===false?'NO':'?'}] ${cr.l}: ${cr.n}\n`);
+    if(t.steps.length){c+=`Next steps:\n`;t.steps.forEach(s=>c+=`  - ${s}\n`);}
   });
-
-  // Call the real Python backend PDF generator
-  window.open(`http://127.0.0.1:8000/export?${params.toString()}`, '_blank');
+  c+=`\nDISCLAIMER\nNeuroMatch Lite is not a medical diagnostic tool. Always consult a neurologist.\n`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([c],{type:'text/plain'}));
+  a.download='neuromatch-report.txt'; a.click();
 }
 </script>
 </body>
