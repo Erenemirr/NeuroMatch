@@ -3,7 +3,12 @@ data/datasets/
 
 # Environment
 .env
+
+# Python
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# System
 node_modules/
 .DS_Store

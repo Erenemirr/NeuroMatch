@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sentence-transformers
+scikit-learn
+numpy
+reportlab
+requests
+openai
+python-dotenv
+streamlit
+pandas
