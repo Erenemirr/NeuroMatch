@@ -291,7 +291,7 @@ async def analyze_all_trials(patient: dict, trials: list) -> list:
     Runs gap analysis for all matched trials.
     Returns list sorted by confidence (best matches first).
     """
-    sem = asyncio.Semaphore(1)  # Sequential to prevent concurrent 429s
+    sem = asyncio.Semaphore(2)  # 2 concurrent for speed while respecting TPM limits
 
     async def bounded_analyze(trial):
         async with sem:
