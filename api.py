@@ -6,15 +6,18 @@ Replaces the placeholder logic in the backend's main.py.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import sys
 import os
+import tempfile
 
 # Add ml directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "ml"))
 
 from pipeline import run_neuromatch, format_pipeline_output
+from report_generator import generate_neuromatch_report
 
 app = FastAPI(
     title="NeuroMatch API",
@@ -170,6 +173,49 @@ async def analyze(request: PatientRequest):
         top_matches=top_matches,
         disclaimer="This is not a medical diagnosis. Please consult a neurologist."
     )
+
+
+@app.post("/report")
+async def generate_report(request: PatientRequest):
+    """
+    Runs the full pipeline and returns a downloadable PDF report.
+    Same input as /analyze but returns a PDF file.
+    """
+    patient_profile = {
+        "patient_id": request.patient_id,
+        "symptoms": request.symptoms,
+        "duration": request.duration,
+        "age": request.age,
+        "gender": request.gender,
+        "existing_conditions": request.existing_conditions or [],
+        "medications": request.medications or [],
+        "report_text": request.report_text,
+        "predicted_diagnosis": [],
+        "matched_trials": []
+    }
+
+    try:
+        result = run_neuromatch(patient_profile, audience=request.audience)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
+
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    # Generate PDF to a temp file
+    try:
+        fd, pdf_path = tempfile.mkstemp(suffix=".pdf")
+        os.close(fd)
+        generate_neuromatch_report(result, pdf_path, audience=request.audience)
+        patient_id = request.patient_id or "anonymous"
+        filename = f"NeuroMatch_Report_{patient_id}.pdf"
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf",
+            filename=filename
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation error: {str(e)}")
 
 
 @app.get("/conditions")

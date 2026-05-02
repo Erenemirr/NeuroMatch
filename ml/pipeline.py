@@ -10,6 +10,7 @@ from parser import fetch_trials_for_diagnoses, parse_trials_batch
 from validator import validate_trials_batch, validate_patient_profile
 from gap_explainer import analyze_all_trials
 from oasis_estimator import enrich_patient_with_oasis, format_oasis_summary
+from report_parser import enrich_profile_from_report
 
 
 def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
@@ -27,6 +28,13 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
     print("\n" + "="*60)
     print("🧠 NeuroMatch Pipeline Starting")
     print("="*60)
+
+    # ── STEP 0: Parse uploaded report (if any) ──
+    report_text = patient_profile.get("report_text")
+    if report_text and len(str(report_text).strip()) > 50:
+        print("\n[Step 0] Parsing uploaded medical report...")
+        patient_profile = enrich_profile_from_report(patient_profile, report_text=report_text)
+        print(f"  ✅ Report parsed: {len(patient_profile.get('symptoms', []))} symptoms extracted")
 
     # ── STEP 0: Validate patient input ──
     print("\n[Step 0] Validating patient profile...")
