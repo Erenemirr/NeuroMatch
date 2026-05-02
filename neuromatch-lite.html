@@ -627,7 +627,13 @@ function renderTrialCardsAPI(matches, filter) {
     return `<div class="tc ${elClass}${openClass}" style="animation-delay:${idx * .06}s" onclick="toggleCard(this)">
       <div class="tc-hdr">
         <span class="ti">${icon}</span>
-        <span class="tt">${t.trial_title}</span>
+        <div style="flex:1;min-width:0">
+          <div class="tt">${t.trial_title}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:3px;font-family:'DM Mono',monospace">
+            🎯 ${t.matched_condition} &nbsp;·&nbsp;
+            <a href="${nctUrl}" target="_blank" style="color:var(--blue);text-decoration:none" onclick="event.stopPropagation()">${t.trial_id} ↗</a>
+          </div>
+        </div>
         <span class="ts ${scoreClass}">${pct}%</span>
         <span class="tc-chev">▼</span>
       </div>
