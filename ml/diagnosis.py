@@ -7,6 +7,7 @@ then feeds those scores into the LLM for a richer, grounded diagnosis.
 
 import os
 import json
+import asyncio
 import pandas as pd
 from groq import AsyncGroq
 from dotenv import load_dotenv
