@@ -4,6 +4,7 @@ from .embedder import SymptomEmbedder
 from .matcher import MatchingEngine
 from .pdf_generator import generate_pdf_report
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 import os
 import tempfile
 from dotenv import load_dotenv
@@ -11,6 +12,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="NeuroMatch Lite API")
+
+# Enable CORS so Beyza's React app can connect
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # In production, replace with the React app's URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 import pandas as pd
 

@@ -1,19 +1,26 @@
-import openai
+from openai import OpenAI
 import os
 from .schemas import PatientProfile, Criterion
 import json
 
 class MatchingEngine:
     def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = os.getenv("GROQ_API_KEY")
         if self.api_key:
-            openai.api_key = self.api_key
+            self.client = OpenAI(
+                base_url="https://api.groq.com/openai/v1",
+                api_key=self.api_key
+            )
+            self.model = "llama-3.3-70b-versatile"
+        else:
+            self.client = None
+            self.model = None
 
     def evaluate_criteria(self, profile: PatientProfile, trial_data: dict):
         """
-        Uses OpenAI to compare patient profile against trial eligibility criteria.
+        Uses Groq (Llama 3) to compare patient profile against trial eligibility criteria.
         """
-        if not self.api_key:
+        if not self.client:
             # Fallback to simple mock logic if no API key
             return self._mock_evaluation(profile, trial_data)
 
@@ -32,7 +39,9 @@ class MatchingEngine:
         Tasks:
         1. Identify 3 key eligibility criteria (e.g., Age range, Condition, health factors).
         2. For each, determine if the patient meets it (True/False).
-        3. Provide a brief explanation.
+        3. Provide an explanation specifically tailored for a {profile.user_type}.
+           - If Patient: Use simple, empathetic, and clear language. Avoid medical jargon.
+           - If Professional/Researcher/Neurologist: Use precise, clinical, and data-driven terminology.
         4. Suggest 2 next steps.
         
         Respond ONLY in JSON format:
@@ -47,17 +56,17 @@ class MatchingEngine:
         """
 
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o-mini", # Using mini for speed/cost in hackathon
+            response = self.client.chat.completions.create(
+                model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a clinical trial eligibility specialist."},
                     {"role": "user", "content": prompt}
                 ],
-                response_format={{ "type": "json_object" }}
+                response_format={ "type": "json_object" }
             )
             return json.loads(response.choices[0].message.content)
         except Exception as e:
-            print(f"OpenAI Error: {e}")
+            print(f"Groq/Llama Error: {e}")
             return self._mock_evaluation(profile, trial_data)
 
     def _mock_evaluation(self, profile: PatientProfile, trial_data: dict):
