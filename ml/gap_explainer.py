@@ -192,30 +192,31 @@ async def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -
         rule_checks=rule_text
     )
 
-    for attempt in range(3):
-        try:
-            response = await client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a clinical trial eligibility expert. Always respond with valid JSON only."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.1,
-                response_format={"type": "json_object"}
-            )
-            break
-        except Exception as e:
-            if "429" in str(e) and attempt < 2:
-                print(f"[WARNING] Rate limit hit. Retrying in 5s... (Attempt {attempt+1})")
-                await asyncio.sleep(5)
-            else:
-                raise e
+    try:
+        for attempt in range(3):
+            try:
+                response = await client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a clinical trial eligibility expert. Always respond with valid JSON only."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+                break
+            except Exception as e:
+                if "429" in str(e) and attempt < 2:
+                    print(f"[WARNING] Rate limit hit. Retrying in 5s... (Attempt {attempt+1})")
+                    await asyncio.sleep(5)
+                else:
+                    raise e
 
         result = json.loads(response.choices[0].message.content)
         print(f"[GAP] {trial.get('nct_id', '')}: {result.get('overall_status')} "

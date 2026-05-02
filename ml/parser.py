@@ -171,32 +171,33 @@ async def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> 
         print(f"[INFO] Using cached parsed criteria for {trial_id}")
         return ELIGIBILITY_CACHE[trial_id]
 
-    for attempt in range(3):
-        try:
-            response = await client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a clinical trial expert. Always respond with valid JSON only. No markdown, no explanation."
-                    },
-                    {
-                        "role": "user",
-                        "content": ELIGIBILITY_PARSE_PROMPT.format(
-                            criteria_text=criteria_text[:3000]
-                        )
-                    }
-                ],
-                temperature=0,
-                response_format={"type": "json_object"}
-            )
-            break
-        except Exception as e:
-            if "429" in str(e) and attempt < 2:
-                print(f"[WARNING] Rate limit hit. Retrying in 5s... (Attempt {attempt+1})")
-                await asyncio.sleep(5)
-            else:
-                raise e
+    try:
+        for attempt in range(3):
+            try:
+                response = await client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a clinical trial expert. Always respond with valid JSON only. No markdown, no explanation."
+                        },
+                        {
+                            "role": "user",
+                            "content": ELIGIBILITY_PARSE_PROMPT.format(
+                                criteria_text=criteria_text[:3000]
+                            )
+                        }
+                    ],
+                    temperature=0,
+                    response_format={"type": "json_object"}
+                )
+                break
+            except Exception as e:
+                if "429" in str(e) and attempt < 2:
+                    print(f"[WARNING] Rate limit hit. Retrying in 5s... (Attempt {attempt+1})")
+                    await asyncio.sleep(5)
+                else:
+                    raise e
 
         raw = response.choices[0].message.content
         parsed = json.loads(raw)
