@@ -1,0 +1,15 @@
+{
+  "patient_id": "001",
+  "symptoms": ["tremor", "balance loss"],
+  "duration": "3 months",
+  "age": 67,
+  "gender": "F",
+  "existing_conditions": [],
+  "medications": [],
+  "report_text": null,
+  "predicted_diagnosis": [
+    {"disease": "Parkinson", "confidence": 0.71},
+    {"disease": "Essential Tremor", "confidence": 0.18}
+  ],
+  "matched_trials": []
+}
