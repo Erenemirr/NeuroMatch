@@ -13,6 +13,27 @@ from dotenv import load_dotenv
 load_dotenv()
 client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
+# ── Persistent Gap Cache ──
+_GAP_CACHE_PATH = os.path.join(os.path.dirname(__file__), ".gap_cache.json")
+
+def _load_gap_cache() -> dict:
+    try:
+        if os.path.exists(_GAP_CACHE_PATH):
+            with open(_GAP_CACHE_PATH, "r") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return {}
+
+def _save_gap_cache(cache: dict):
+    try:
+        with open(_GAP_CACHE_PATH, "w") as f:
+            json.dump(cache, f, indent=2)
+    except Exception:
+        pass
+
+GAP_CACHE = _load_gap_cache()
+
 
 # ── SECTION 1: Rule-Based Eligibility Checker ──
 
@@ -192,11 +213,17 @@ async def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -
         rule_checks=rule_text
     )
 
+    # Check gap cache first
+    cache_key = f"{trial.get('nct_id', '')}_{patient.get('age', '')}_{patient.get('existing_conditions', [])[:1]}"
+    if cache_key in GAP_CACHE:
+        print(f"[CACHE] Using cached gap analysis for {trial.get('nct_id', '')}")
+        return GAP_CACHE[cache_key]
+
     try:
         for attempt in range(3):
             try:
                 response = await client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {
                             "role": "system",
@@ -221,6 +248,9 @@ async def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -
         result = json.loads(response.choices[0].message.content)
         print(f"[GAP] {trial.get('nct_id', '')}: {result.get('overall_status')} "
               f"({len(result.get('gaps', []))} gaps, {len(result.get('strengths', []))} strengths)")
+        # Save to persistent cache
+        GAP_CACHE[cache_key] = result
+        _save_gap_cache(GAP_CACHE)
         return result
 
     except json.JSONDecodeError as e:
@@ -261,7 +291,7 @@ async def analyze_all_trials(patient: dict, trials: list) -> list:
     Runs gap analysis for all matched trials.
     Returns list sorted by confidence (best matches first).
     """
-    sem = asyncio.Semaphore(2)
+    sem = asyncio.Semaphore(1)  # Sequential to prevent concurrent 429s
 
     async def bounded_analyze(trial):
         async with sem:
