@@ -75,6 +75,8 @@ def parse_trial_summary(study: dict) -> dict:
         "title": id_module.get("briefTitle", "N/A"),
         "status": status_module.get("overallStatus", "N/A"),
         "phase": status_module.get("phase", "N/A"),
+        "start_date": status_module.get("startDateStruct", {}).get("date", "N/A"),
+        "completion_date": status_module.get("completionDateStruct", {}).get("date", "N/A"),
         "eligibility_criteria_raw": eligibility_module.get("eligibilityCriteria", ""),
         "min_age": eligibility_module.get("minimumAge", "N/A"),
         "max_age": eligibility_module.get("maximumAge", "N/A"),

@@ -25,6 +25,10 @@ except ImportError as e:
     def run_neuromatch(p, audience="patient"): return {"error": f"ML Pipeline error: {error_msg}"}
     def format_pipeline_output(r): return r
 
+from src.pdf_generator import generate_pdf_report
+from fastapi.responses import FileResponse
+import tempfile
+
 app = FastAPI(
     title="NeuroMatch API",
     description="AI-powered neurological clinical trial matching",
@@ -68,6 +72,8 @@ class TrialMatch(BaseModel):
     matched_condition: str
     overall_status: str        # "likely_eligible" | "needs_more_info" | "likely_ineligible"
     confidence: float
+    start_date: str = "N/A"
+    completion_date: str = "N/A"
     strengths: List[str]
     gaps: List[GapItem]
     summary_patient: str
@@ -155,6 +161,8 @@ async def analyze(request: PatientRequest):
             matched_condition=gap.get("matched_condition", ""),
             overall_status=gap.get("overall_status", "needs_more_info"),
             confidence=gap.get("confidence", 0.0),
+            start_date=gap.get("start_date", "N/A"),
+            completion_date=gap.get("completion_date", "N/A"),
             strengths=llm.get("strengths", []),
             gaps=gaps_formatted,
             summary_patient=llm.get("summary_patient", ""),
@@ -181,6 +189,29 @@ async def analyze(request: PatientRequest):
         top_matches=top_matches,
         disclaimer="This is not a medical diagnosis. Please consult a neurologist."
     )
+
+
+@app.get("/export")
+async def export_report(
+    trial_title: str, 
+    match_score: float, 
+    summary: str, 
+    patient_summary: str
+):
+    """Generates a PDF report for the patient to share with their doctor."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        generate_pdf_report(
+            tmp.name,
+            patient_summary,
+            trial_title,
+            match_score,
+            summary
+        )
+        return FileResponse(
+            tmp.name, 
+            media_type="application/pdf", 
+            filename=f"NeuroMatch_Report_{trial_title[:20]}.pdf"
+        )
 
 
 @app.get("/conditions")

@@ -134,6 +134,7 @@ if st.button("🔍 Find Matching Clinical Trials"):
                         with cols[0]:
                             st.markdown(f"### {match.get('trial_title', 'N/A')}")
                             st.markdown(f"**Trial ID:** `{match.get('trial_id', 'N/A')}`")
+                            st.markdown(f"📅 **Trial Timeline:** `{match.get('start_date', 'N/A')}` — `{match.get('completion_date', 'N/A')}`")
                         with cols[1]:
                             confidence = match.get('confidence', 0)
                             # Handle confidence being either 0-1 or 0-100
@@ -165,7 +166,7 @@ if st.button("🔍 Find Matching Clinical Trials"):
                             st.markdown("- Consult with your neurologist about this specific trial.")
                             st.markdown("- Review the official listing on ClinicalTrials.gov.")
 
-                        # PDF Download Link
+                        # PDF Download & Official Link
                         confidence = match.get('confidence', 0)
                         score_float = confidence if confidence <= 1 else confidence / 100
                         params = {
@@ -176,7 +177,12 @@ if st.button("🔍 Find Matching Clinical Trials"):
                         }
                         export_url = f"{API_URL}/export?{urllib.parse.urlencode(params)}"
                         
-                        st.link_button("📄 Download PDF Report", export_url)
+                        btn_cols = st.columns(2)
+                        with btn_cols[0]:
+                            st.markdown(f'<a href="{export_url}" target="_blank" class="download-btn">📥 Download Clinical Report (PDF)</a>', unsafe_allow_html=True)
+                        with btn_cols[1]:
+                            official_url = f"https://clinicaltrials.gov/study/{match.get('trial_id')}"
+                            st.markdown(f'<a href="{official_url}" target="_blank" class="download-btn" style="background: #4A5568;">🔗 View Official Listing</a>', unsafe_allow_html=True)
                                 
                         st.markdown('</div>', unsafe_allow_html=True)
                         

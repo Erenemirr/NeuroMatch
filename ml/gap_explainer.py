@@ -237,6 +237,8 @@ def analyze_patient_trial_gaps(patient: dict, trial: dict) -> dict:
         "trial_id": trial.get("nct_id", ""),
         "trial_title": trial.get("title", ""),
         "matched_condition": trial.get("matched_condition", ""),
+        "start_date": trial.get("start_date", "N/A"),
+        "completion_date": trial.get("completion_date", "N/A"),
         "rule_checks": rule_checks,
         "llm_analysis": llm_analysis,
         "overall_status": llm_analysis.get("overall_status", "needs_more_info"),
