@@ -417,10 +417,17 @@ function si(e){return e==='eligible'?'✅':e==='partial'?'🟡':'❌';}
 function mi(m){return m===true?'✅':m===false?'❌':'⬜';}
 function bc(e){return e==='eligible'?'var(--green)':e==='partial'?'var(--amber)':'var(--red)';}
 
+let globalDiagnosisText = "";
+
 async function runAnalysis(){
   aud=document.getElementById('aud-select').value;
+  const age=parseInt(document.getElementById('age-input').value) || 30;
+  const conds=document.getElementById('cond-input').value;
+  const symp=document.getElementById('symptom-text').value;
+
   document.getElementById('input-panel').style.display='none';
   document.getElementById('loader-panel').style.display='block';
+
   const msgs=["Analyzing symptoms...","Querying ClinicalTrials.gov...","Scoring eligibility criteria...","Adapting for audience..."];
   let i=0;
   const iv=setInterval(()=>{
@@ -429,7 +436,64 @@ async function runAnalysis(){
     document.getElementById('d'+i)?.classList.add('act');
     document.getElementById('ldr-txt').textContent=msgs[i];
   },850);
-  await new Promise(r=>setTimeout(r,3400));
+
+  try {
+    const payload = {
+      patient_id: "demo",
+      age: age,
+      gender: "ALL",
+      symptoms: symp ? [symp] : ["Tremor", "Fatigue"],
+      existing_conditions: conds ? [conds] : [],
+      audience: aud
+    };
+
+    const response = await fetch("http://127.0.0.1:8000/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if(!response.ok) throw new Error("API failed");
+    
+    const data = await response.json();
+    
+    // Map backend response to frontend T structure
+    T.length = 0; // clear mock data
+    globalDiagnosisText = data.diagnosis_text;
+
+    data.top_matches.forEach(m => {
+      let score = Math.round(m.confidence * 100);
+      let el_status = m.overall_status === "likely_eligible" ? "eligible" : 
+                      m.overall_status === "needs_more_info" ? "partial" : "ineligible";
+
+      let cr = [];
+      m.strengths.forEach(s => cr.push({m: true, l: "Strength", n: s}));
+      m.gaps.forEach(g => cr.push({m: false, l: g.criterion, n: g.explanation}));
+
+      let steps = m.gaps.filter(g => g.action).map(g => g.action);
+      
+      T.push({
+        id: m.trial_id,
+        title: m.trial_title,
+        phase: "N/A",
+        status: "Recruiting",
+        loc: "Multiple Locations",
+        score: score,
+        el: el_status,
+        cr: cr,
+        reason: aud === "patient" ? m.summary_patient : m.summary_clinician,
+        steps: steps
+      });
+    });
+
+  } catch (error) {
+    console.error("Error calling API:", error);
+    alert("Backend connection failed. Make sure the API is running at http://127.0.0.1:8000.");
+    resetForm();
+    clearInterval(iv);
+    return;
+  }
+
   clearInterval(iv);
   document.getElementById('loader-panel').style.display='none';
   renderResults();
@@ -456,7 +520,7 @@ function renderResults(){
     </div>
     <div class="abox">
       <div class="atop"><span class="albl">Summary for</span><span class="abadge">${AL[aud]}</span></div>
-      <div class="atxt">${audTxt(aud)}</div>
+      <div class="atxt">${globalDiagnosisText.replace(/\n/g, '<br>')}</div>
     </div>
     <div class="frow">
       <span class="flbl">Filter</span>
