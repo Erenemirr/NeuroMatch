@@ -126,10 +126,10 @@ async def analyze(request: PatientRequest):
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    # Extract top 5 matches (exclude likely_ineligible from top display)
+    # Extract all matches — frontend handles filtering/display
     gap_analysis = result.get("gap_analysis", [])
     top_matches = []
-    for gap in gap_analysis[:5]:
+    for gap in gap_analysis:
         llm = gap.get("llm_analysis", {})
         gaps_raw = llm.get("gaps", [])
         gaps_formatted = [
