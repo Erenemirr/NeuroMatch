@@ -164,6 +164,12 @@ Semantic Similarity Scores (cosine similarity between patient symptoms and disea
 
 Use the semantic similarity scores as a prior — they reflect how closely the patient's symptom text matches known disease descriptions. Combine this with your clinical reasoning to assign final confidence scores.
 
+IMPORTANT SCORING RULES:
+- If a disease appears in "Existing Conditions", assign it a confidence of 0.92 or higher — it is already diagnosed.
+- If symptoms strongly and exclusively match one disease (e.g. resting tremor + bradykinesia = Parkinson's), assign 0.88–0.95.
+- Reserve scores below 0.5 for unlikely differentials only.
+- Do NOT be overly conservative — a confident symptom match should yield a confident score.
+
 Based on the symptoms provided, return a JSON with the following structure:
 {{
     "preliminary_diagnoses": [
@@ -258,6 +264,15 @@ async def generate_diagnosis(patient_profile: dict, disease_profiles: dict = Non
                     raise e
 
         result = json.loads(response.choices[0].message.content)
+
+        # Post-process: boost confidence if disease matches existing_conditions
+        existing = [c.lower() for c in patient_profile.get("existing_conditions", [])]
+        for d in result.get("preliminary_diagnoses", []):
+            disease_lower = d["disease"].lower()
+            if any(ex in disease_lower or disease_lower in ex for ex in existing):
+                if d["confidence"] < 0.92:
+                    print(f"[BOOST] {d['disease']} confidence {d['confidence']:.2f} → 0.92 (existing condition)")
+                    d["confidence"] = 0.92
 
         # Add to patient profile
         patient_profile["predicted_diagnosis"] = [

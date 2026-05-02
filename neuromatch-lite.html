@@ -190,31 +190,56 @@ textarea::placeholder { color:var(--t3); }
 }
 .fbtn:hover { border-color:var(--blue); color:var(--blue); }
 .fbtn.act { background:var(--blue); color:#fff; border-color:var(--blue); }
-/* TRIAL CARDS */
+/* TRIAL CARDS — Accordion */
 .tc {
   background:var(--s2); border:1px solid var(--b1); border-radius:var(--rl);
-  padding:16px 18px; margin-bottom:10px; transition:all .2s;
+  margin-bottom:8px; transition:border-color .2s, box-shadow .2s;
   position:relative; overflow:hidden; animation:si .35s ease both;
 }
-.tc:hover { border-color:var(--b2); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,0,0,.08); }
-.tc.eligible::before  { content:''; position:absolute; left:0;top:0;bottom:0;width:3px;background:var(--green);border-radius:3px 0 0 3px; }
-.tc.partial::before   { content:''; position:absolute; left:0;top:0;bottom:0;width:3px;background:var(--amber);border-radius:3px 0 0 3px; }
-.tc.ineligible::before{ content:''; position:absolute; left:0;top:0;bottom:0;width:3px;background:var(--red);border-radius:3px 0 0 3px; }
-.th { display:flex; align-items:flex-start; gap:10px; margin-bottom:8px; }
-.ti { font-size:15px; flex-shrink:0; margin-top:2px; }
-.tt { font-size:14px; font-weight:500; line-height:1.4; flex:1; }
+.tc.eligible  { border-left:3px solid var(--green); }
+.tc.partial   { border-left:3px solid var(--amber); }
+.tc.ineligible{ border-left:3px solid var(--red); }
+
+/* Header row — always visible, clickable */
+.tc-hdr {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; cursor:pointer; user-select:none;
+  transition:background .15s;
+}
+.tc-hdr:hover { background:var(--b1); }
+.tc.open .tc-hdr { background:var(--b1); }
+.ti { font-size:15px; flex-shrink:0; }
+.tt { font-size:13.5px; font-weight:500; line-height:1.35; flex:1; color:var(--t1); }
 .ts {
-  font-family:'DM Mono',monospace; font-size:13px; font-weight:500;
-  padding:3px 9px; border-radius:6px; flex-shrink:0;
+  font-family:'DM Mono',monospace; font-size:12px; font-weight:500;
+  padding:2px 8px; border-radius:6px; flex-shrink:0;
 }
 .ts.h{background:var(--green-d);color:var(--green);border:1px solid rgba(16,185,129,.2);}
 .ts.m{background:var(--amber-d);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
 .ts.l{background:var(--red-d);color:var(--red);border:1px solid rgba(239,68,68,.2);}
-.bar-bg { height:3px; background:var(--s3); border-radius:2px; overflow:hidden; margin:8px 0 12px; }
-.bar-fill { height:100%; border-radius:2px; transition:width .9s cubic-bezier(.4,0,.2,1); }
-.tmeta { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px; font-size:12px; color:var(--t3); }
+.tc-chev {
+  font-size:11px; color:var(--t3); flex-shrink:0;
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+}
+.tc.open .tc-chev { transform:rotate(180deg); }
+
+/* Progress bar — always visible under header */
+.bar-bg { height:2px; background:var(--b1); overflow:hidden; }
+.bar-fill { height:100%; border-radius:0; transition:width 1s cubic-bezier(.4,0,.2,1); }
+
+/* Collapsible body */
+.tc-body {
+  max-height:0; overflow:hidden;
+  transition:max-height .35s cubic-bezier(.4,0,.2,1), padding .25s;
+  padding:0 16px;
+}
+.tc.open .tc-body {
+  max-height:800px;
+  padding:12px 16px 16px;
+}
+.tmeta { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:10px; font-size:12px; color:var(--t3); }
 .tid { font-family:'DM Mono',monospace; font-size:10px; }
-.crit { display:flex; flex-direction:column; gap:5px; }
+.crit { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
 .cr { display:flex; align-items:flex-start; gap:7px; font-size:12px; color:var(--t2); line-height:1.45; }
 .ci { flex-shrink:0; font-size:11px; margin-top:1px; }
 /* DISCLAIMER */
@@ -531,9 +556,34 @@ function renderResultsFromAPI(data) {
     </div>
 
     <div id="tlist">${renderTrialCardsAPI(matches, 'all')}</div>
+    <script>
+      // Animate first card's bar on load
+      requestAnimationFrame(() => {
+        const firstFill = document.querySelector('.tc.open .bar-fill');
+        if (firstFill && firstFill.dataset.pct) {
+          firstFill.style.transition = 'none';
+          firstFill.style.width = '0%';
+          requestAnimationFrame(() => {
+            firstFill.style.transition = '';
+            firstFill.style.width = firstFill.dataset.pct + '%';
+          });
+        }
+      });
+    <\/script>
 
     <div class="disc">⚠️ NeuroMatch is not a medical diagnostic tool. Results are AI-generated and may not be accurate. Always consult a qualified neurologist before enrolling in any clinical trial.</div>
   </div>`;
+}
+
+function toggleCard(el) {
+  el.classList.toggle('open');
+  // trigger bar animation on open
+  if (el.classList.contains('open')) {
+    const fill = el.querySelector('.bar-fill');
+    if (fill && fill.dataset.pct) {
+      setTimeout(() => { fill.style.width = fill.dataset.pct + '%'; }, 30);
+    }
+  }
 }
 
 function renderTrialCardsAPI(matches, filter) {
@@ -563,28 +613,46 @@ function renderTrialCardsAPI(matches, filter) {
 
     const nctUrl = `https://clinicaltrials.gov/study/${t.trial_id}`;
 
-    return `<div class="tc ${elClass}" style="animation-delay:${idx * .07}s">
-      <div class="th">
+    const nextSteps = (t.gaps || []).filter(g => g.action).map((g, gi, arr) =>
+      `<div style="display:flex;gap:8px;margin-bottom:${gi < arr.length-1 ? '6px' : '0'};font-size:12px;color:var(--t2);line-height:1.5">
+        <span style="color:var(--blue);font-weight:600;flex-shrink:0">${gi+1}.</span>
+        <span>${g.action}</span>
+      </div>`
+    ).join('');
+
+    // First card open by default
+    const openClass = idx === 0 ? ' open' : '';
+    const initialWidth = idx === 0 ? pct : 0;
+
+    return `<div class="tc ${elClass}${openClass}" style="animation-delay:${idx * .06}s" onclick="toggleCard(this)">
+      <div class="tc-hdr">
         <span class="ti">${icon}</span>
-        <span class="tt">${t.trial_title}</span>
+        <div style="flex:1;min-width:0">
+          <div class="tt">${t.trial_title}</div>
+          <div style="font-size:11px;color:var(--t3);margin-top:3px;font-family:'DM Mono',monospace">
+            🎯 ${t.matched_condition} &nbsp;·&nbsp;
+            <a href="${nctUrl}" target="_blank" style="color:var(--blue);text-decoration:none" onclick="event.stopPropagation()">${t.trial_id} ↗</a>
+          </div>
+        </div>
         <span class="ts ${scoreClass}">${pct}%</span>
+        <span class="tc-chev">▼</span>
       </div>
-      <div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
-      <div class="tmeta">
-        <span>🎯 ${t.matched_condition}</span>
-        <span class="tid"><a href="${nctUrl}" target="_blank" style="color:var(--blue);text-decoration:none">${t.trial_id}</a></span>
+      <div class="bar-bg">
+        <div class="bar-fill" data-pct="${pct}" style="width:${initialWidth}%;background:${color}"></div>
       </div>
-      ${strengths || gaps ? `<div class="crit">${strengths}${gaps}</div>` : ''}
-      ${t.summary_patient ? `<div style="margin-top:10px;font-size:13px;color:var(--t2);line-height:1.6;padding-top:10px;border-top:1px solid var(--b1)">${t.summary_patient}</div>` : ''}
-      ${(t.gaps && t.gaps.length) ? `
-        <div style="margin-top:12px;padding:12px 14px;border-radius:8px;background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.12)">
-          <div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">📋 Next Steps</div>
-          ${t.gaps.map((g, gi) => g.action ? `
-            <div style="display:flex;gap:8px;margin-bottom:${gi < t.gaps.length-1 ? '6px' : '0'};font-size:12px;color:var(--t2);line-height:1.5">
-              <span style="color:var(--blue);font-weight:600;flex-shrink:0">${gi+1}.</span>
-              <span>${g.action}</span>
-            </div>` : '').join('')}
-        </div>` : ''}
+      <div class="tc-body">
+        <div class="tmeta">
+          <span>🎯 ${t.matched_condition}</span>
+          <span class="tid"><a href="${nctUrl}" target="_blank" style="color:var(--blue);text-decoration:none" onclick="event.stopPropagation()">${t.trial_id} ↗</a></span>
+        </div>
+        ${strengths || gaps ? `<div class="crit">${strengths}${gaps}</div>` : ''}
+        ${t.summary_patient ? `<div style="font-size:13px;color:var(--t2);line-height:1.65;padding:10px 0;border-top:1px solid var(--b1);border-bottom:${nextSteps ? '1px solid var(--b1)' : 'none'};margin-bottom:${nextSteps ? '10px' : '0'}">${t.summary_patient}</div>` : ''}
+        ${nextSteps ? `
+          <div style="padding:10px 12px;border-radius:8px;background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.12)">
+            <div style="font-size:10px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px">📋 Next Steps</div>
+            ${nextSteps}
+          </div>` : ''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -592,6 +660,18 @@ function renderTrialCardsAPI(matches, filter) {
 function setFiltAPI(f) {
   document.querySelectorAll('.fbtn').forEach(b => b.classList.toggle('act', b.dataset.f === f));
   document.getElementById('tlist').innerHTML = renderTrialCardsAPI(_apiMatches, f);
+  // animate first card's bar
+  requestAnimationFrame(() => {
+    const firstFill = document.querySelector('.tc.open .bar-fill');
+    if (firstFill && firstFill.dataset.pct) {
+      firstFill.style.transition = 'none';
+      firstFill.style.width = '0%';
+      requestAnimationFrame(() => {
+        firstFill.style.transition = '';
+        firstFill.style.width = firstFill.dataset.pct + '%';
+      });
+    }
+  });
 }
 
 function resetForm() {
