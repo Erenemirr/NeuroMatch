@@ -5,11 +5,12 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 import os
 
-def generate_pdf_report(analysis_data: dict, output_path: str):
+def generate_pdf_report(analysis_data: dict, output):
     """
     Generates a professional PDF report for the patient.
+    'output' can be a file path string or a file-like object (e.g. BytesIO).
     """
-    doc = SimpleDocTemplate(output_path, pagesize=letter)
+    doc = SimpleDocTemplate(output, pagesize=letter)
     styles = getSampleStyleSheet()
     story = []
 
@@ -26,14 +27,18 @@ def generate_pdf_report(analysis_data: dict, output_path: str):
     story.append(Paragraph("<b>Recommended Clinical Trials:</b>", styles['Heading2']))
     
     for match in analysis_data.get('matches', []):
-        story.append(Paragraph(f"<b>{match.title} (Match Score: {int(match.match_score * 100)}%)</b>", styles['Heading3']))
-        story.append(Paragraph(match.summary, styles['Normal']))
+        title = match.get('title', 'Unknown Trial')
+        score = int(match.get('match_score', 0) * 100)
+        summary = match.get('summary', '')
+        
+        story.append(Paragraph(f"<b>{title} (Match Score: {score}%)</b>", styles['Heading3']))
+        story.append(Paragraph(summary, styles['Normal']))
         
         # Criteria Table
         data = [["Criterion", "Status", "Details"]]
-        for c in match.criteria_status:
-            status = "✅ Met" if c.is_met else "❌ Not Met"
-            data.append([c.name, status, c.details])
+        for c in match.get('criteria_status', []):
+            status = "✅ Met" if c.get('is_met') else "❌ Not Met"
+            data.append([c.get('name', 'N/A'), status, c.get('details', '')])
             
         t = Table(data, colWidths=[120, 80, 250])
         t.setStyle(TableStyle([
@@ -48,9 +53,9 @@ def generate_pdf_report(analysis_data: dict, output_path: str):
 
         # Next Steps
         story.append(Paragraph("<b>Recommended Next Steps:</b>", styles['Normal']))
-        for step in match.next_steps:
+        for step in match.get('next_steps', []):
             story.append(Paragraph(f"• {step}", styles['Normal']))
         story.append(Spacer(1, 12))
 
     doc.build(story)
-    return output_path
+    return output

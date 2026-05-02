@@ -1,6 +1,21 @@
 import streamlit as st
 import requests
 import json
+import sys
+import os
+import io
+import urllib.parse
+
+# Add the parent directory (project root) to sys.path so 'src' can be imported
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from src.pdf_generator import generate_pdf_report
+
+@st.cache_data
+def get_pdf_data(pdf_data):
+    buffer = io.BytesIO()
+    generate_pdf_report(pdf_data, buffer)
+    return buffer.getvalue()
 
 # Set up page config
 st.set_page_config(
@@ -134,6 +149,17 @@ if st.button("🔍 Find Matching Clinical Trials"):
                         with st.expander("Recommended Next Steps"):
                             for step in match['next_steps']:
                                 st.markdown(f"- {step}")
+
+                        # PDF Download Link (Prevents IDM auto-trigger)
+                        params = {
+                            "trial_title": match['title'],
+                            "match_score": match['match_score'],
+                            "summary": match['summary'],
+                            "patient_summary": data.get('patient_summary')
+                        }
+                        export_url = f"{API_URL}/export?{urllib.parse.urlencode(params)}"
+                        
+                        st.link_button("📄 Download PDF Report", export_url)
                                 
                         st.markdown('</div>', unsafe_allow_html=True)
                         
