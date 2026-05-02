@@ -223,7 +223,7 @@ async def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -
         for attempt in range(3):
             try:
                 response = await client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {
                             "role": "system",
