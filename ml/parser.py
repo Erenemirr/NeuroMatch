@@ -6,11 +6,16 @@ Fetches real neurological trials and parses eligibility criteria into structured
 import os
 import json
 import requests
-from groq import Groq
+import asyncio
+from groq import AsyncGroq
 from dotenv import load_dotenv
 
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+
+# ── CACHES ──
+TRIAL_CACHE = {}
+ELIGIBILITY_CACHE = {}
 
 CLINICALTRIALS_BASE = "https://clinicaltrials.gov/api/v2/studies"
 
@@ -29,7 +34,12 @@ NEURO_CONDITIONS = [
 
 # ── SECTION 1: ClinicalTrials.gov API ──
 
-def fetch_trials(condition: str, location: str = None, max_results: int = 10) -> list:
+async def fetch_trials(condition: str, location: str = None, max_results: int = 10) -> list:
+    cache_key = f"{condition}_{location}_{max_results}"
+    if cache_key in TRIAL_CACHE:
+        print(f"[INFO] Using cached trials for: {condition}")
+        return TRIAL_CACHE[cache_key]
+
     params = {
         "query.cond": condition,
         "filter.overallStatus": "RECRUITING",
@@ -41,12 +51,17 @@ def fetch_trials(condition: str, location: str = None, max_results: int = 10) ->
 
     try:
         print(f"[INFO] Fetching trials for: {condition}")
-        response = requests.get(CLINICALTRIALS_BASE, params=params, timeout=15)
+        def fetch_sync():
+            return requests.get(CLINICALTRIALS_BASE, params=params, timeout=15.0)
+        
+        response = await asyncio.to_thread(fetch_sync)
         response.raise_for_status()
         data = response.json()
         studies = data.get("studies", [])
         print(f"[INFO] Found {len(studies)} trials for {condition}")
-        return [parse_trial_summary(s) for s in studies]
+        results = [parse_trial_summary(s) for s in studies]
+        TRIAL_CACHE[cache_key] = results
+        return results
     except requests.exceptions.Timeout:
         print(f"[ERROR] Request timed out for {condition}")
         return []
@@ -86,19 +101,26 @@ def parse_trial_summary(study: dict) -> dict:
     }
 
 
-def fetch_trials_for_diagnoses(diagnoses: list, max_per_condition: int = 5) -> list:
+async def fetch_trials_for_diagnoses(diagnoses: list, max_per_condition: int = 5) -> list:
     all_trials = []
     seen_ids = set()
 
-    for diagnosis in diagnoses[:2]:
+    async def fetch_and_tag(diagnosis):
         condition = diagnosis.get("disease", "")
         if not condition:
-            continue
-        trials = fetch_trials(condition, max_results=max_per_condition)
+            return []
+        trials = await fetch_trials(condition, max_results=max_per_condition)
+        for trial in trials:
+            trial["matched_condition"] = condition
+        return trials
+
+    tasks = [fetch_and_tag(d) for d in diagnoses[:2]]
+    results = await asyncio.gather(*tasks)
+
+    for trials in results:
         for trial in trials:
             if trial["nct_id"] not in seen_ids:
                 seen_ids.add(trial["nct_id"])
-                trial["matched_condition"] = condition
                 all_trials.append(trial)
 
     return all_trials
@@ -141,33 +163,46 @@ Rules:
 """
 
 
-def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> dict:
+async def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> dict:
     if not criteria_text or len(criteria_text.strip()) < 20:
         return {"inclusion_criteria": [], "exclusion_criteria": []}
 
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a clinical trial expert. Always respond with valid JSON only. No markdown, no explanation."
-                },
-                {
-                    "role": "user",
-                    "content": ELIGIBILITY_PARSE_PROMPT.format(
-                        criteria_text=criteria_text[:3000]
-                    )
-                }
-            ],
-            temperature=0,
-            response_format={"type": "json_object"}
-        )
+    if trial_id in ELIGIBILITY_CACHE:
+        print(f"[INFO] Using cached parsed criteria for {trial_id}")
+        return ELIGIBILITY_CACHE[trial_id]
+
+    for attempt in range(3):
+        try:
+            response = await client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a clinical trial expert. Always respond with valid JSON only. No markdown, no explanation."
+                    },
+                    {
+                        "role": "user",
+                        "content": ELIGIBILITY_PARSE_PROMPT.format(
+                            criteria_text=criteria_text[:3000]
+                        )
+                    }
+                ],
+                temperature=0,
+                response_format={"type": "json_object"}
+            )
+            break
+        except Exception as e:
+            if "429" in str(e) and attempt < 2:
+                print(f"[WARNING] Rate limit hit. Retrying in 5s... (Attempt {attempt+1})")
+                await asyncio.sleep(5)
+            else:
+                raise e
 
         raw = response.choices[0].message.content
         parsed = json.loads(raw)
         print(f"[INFO] Parsed {len(parsed.get('inclusion_criteria', []))} inclusion + "
               f"{len(parsed.get('exclusion_criteria', []))} exclusion criteria for {trial_id}")
+        ELIGIBILITY_CACHE[trial_id] = parsed
         return parsed
 
     except json.JSONDecodeError as e:
@@ -178,14 +213,22 @@ def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> dict:
         return {"inclusion_criteria": [], "exclusion_criteria": []}
 
 
-def parse_trials_batch(trials: list) -> list:
-    enriched = []
-    for trial in trials:
-        raw_criteria = trial.get("eligibility_criteria_raw", "")
-        parsed = parse_eligibility_with_llm(raw_criteria, trial.get("nct_id", ""))
-        trial["parsed_eligibility"] = parsed
-        enriched.append(trial)
-    return enriched
+async def parse_trials_batch(trials: list) -> list:
+    # Limit concurrency to 2 to prevent hitting Groq free tier rate limits
+    sem = asyncio.Semaphore(2)
+
+    async def process_trial(trial):
+        async with sem:
+            # Small sleep to prevent burst rate limits
+            await asyncio.sleep(0.5)
+            raw_criteria = trial.get("eligibility_criteria_raw", "")
+            parsed = await parse_eligibility_with_llm(raw_criteria, trial.get("nct_id", ""))
+            trial["parsed_eligibility"] = parsed
+            return trial
+
+    tasks = [process_trial(t) for t in trials]
+    enriched = await asyncio.gather(*tasks)
+    return list(enriched)
 
 
 # ── TEST ──

@@ -22,7 +22,7 @@ except ImportError as e:
     print(f"IMPORT ERROR: {error_msg}")
     import traceback
     traceback.print_exc()
-    def run_neuromatch(p, audience="patient"): return {"error": f"ML Pipeline error: {error_msg}"}
+    async def run_neuromatch(p, audience="patient"): return {"error": f"ML Pipeline error: {error_msg}"}
     def format_pipeline_output(r): return r
 
 from src.pdf_generator import generate_pdf_report
@@ -131,7 +131,7 @@ async def analyze(request: PatientRequest):
     }
 
     try:
-        result = run_neuromatch(patient_profile, audience=request.audience)
+        result = await run_neuromatch(patient_profile, audience=request.audience)
     except Exception as e:
         print(f"PIPELINE CRASH: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")

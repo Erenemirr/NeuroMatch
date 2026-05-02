@@ -6,11 +6,12 @@ Produces human-readable gap analysis for each audience type.
 
 import os
 import json
-from groq import Groq
+import asyncio
+from groq import AsyncGroq
 from dotenv import load_dotenv
 
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 # ── SECTION 1: Rule-Based Eligibility Checker ──
@@ -148,7 +149,7 @@ Only return valid JSON. Be honest but compassionate in explanations.
 """
 
 
-def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -> dict:
+async def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -> dict:
     """
     Uses LLM to generate a detailed gap analysis between patient profile and trial criteria.
     """
@@ -191,22 +192,30 @@ def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -> dict
         rule_checks=rule_text
     )
 
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a clinical trial eligibility expert. Always respond with valid JSON only."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ],
-            temperature=0.1,
-            response_format={"type": "json_object"}
-        )
+    for attempt in range(3):
+        try:
+            response = await client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a clinical trial eligibility expert. Always respond with valid JSON only."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.1,
+                response_format={"type": "json_object"}
+            )
+            break
+        except Exception as e:
+            if "429" in str(e) and attempt < 2:
+                print(f"[WARNING] Rate limit hit. Retrying in 5s... (Attempt {attempt+1})")
+                await asyncio.sleep(5)
+            else:
+                raise e
 
         result = json.loads(response.choices[0].message.content)
         print(f"[GAP] {trial.get('nct_id', '')}: {result.get('overall_status')} "
@@ -223,7 +232,7 @@ def explain_gaps_with_llm(patient: dict, trial: dict, rule_checks: list) -> dict
 
 # ── SECTION 3: Full Gap Analysis Pipeline ──
 
-def analyze_patient_trial_gaps(patient: dict, trial: dict) -> dict:
+async def analyze_patient_trial_gaps(patient: dict, trial: dict) -> dict:
     """
     Full gap analysis: rule-based checks + LLM explanation.
 
@@ -231,7 +240,7 @@ def analyze_patient_trial_gaps(patient: dict, trial: dict) -> dict:
         Complete gap analysis dict
     """
     rule_checks = run_rule_based_checks(patient, trial)
-    llm_analysis = explain_gaps_with_llm(patient, trial, rule_checks)
+    llm_analysis = await explain_gaps_with_llm(patient, trial, rule_checks)
 
     return {
         "trial_id": trial.get("nct_id", ""),
@@ -246,15 +255,20 @@ def analyze_patient_trial_gaps(patient: dict, trial: dict) -> dict:
     }
 
 
-def analyze_all_trials(patient: dict, trials: list) -> list:
+async def analyze_all_trials(patient: dict, trials: list) -> list:
     """
     Runs gap analysis for all matched trials.
     Returns list sorted by confidence (best matches first).
     """
-    results = []
-    for trial in trials:
-        gap = analyze_patient_trial_gaps(patient, trial)
-        results.append(gap)
+    sem = asyncio.Semaphore(2)
+
+    async def bounded_analyze(trial):
+        async with sem:
+            await asyncio.sleep(0.5)
+            return await analyze_patient_trial_gaps(patient, trial)
+
+    tasks = [bounded_analyze(trial) for trial in trials]
+    results = await asyncio.gather(*tasks)
 
     # Sort: likely_eligible first, then by confidence
     status_order = {"likely_eligible": 0, "needs_more_info": 1, "likely_ineligible": 2}

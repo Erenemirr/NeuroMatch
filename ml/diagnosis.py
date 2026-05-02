@@ -6,11 +6,11 @@ Generates confidence-scored preliminary diagnosis from patient symptoms.
 import os
 import json
 import pandas as pd
-from groq import Groq
+from groq import AsyncGroq
 from dotenv import load_dotenv
 
 load_dotenv()
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
 
 # ── NEUROLOGICAL DISEASE PROFILES ──
 # Loaded from our Kaggle datasets to build reference profiles
@@ -111,7 +111,7 @@ Only return valid JSON, nothing else.
 """
 
 
-def generate_diagnosis(patient_profile: dict, disease_profiles: dict = None) -> dict:
+async def generate_diagnosis(patient_profile: dict, disease_profiles: dict = None) -> dict:
     """
     Generates a confidence-scored neurological diagnosis from patient symptoms.
 
@@ -143,7 +143,7 @@ def generate_diagnosis(patient_profile: dict, disease_profiles: dict = None) -> 
     )
 
     try:
-        response = client.chat.completions.create(
+        response = await client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[
                 {

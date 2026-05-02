@@ -11,7 +11,7 @@ from validator import validate_trials_batch, validate_patient_profile
 from gap_explainer import analyze_all_trials
 
 
-def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
+async def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
     """
     Full NeuroMatch pipeline.
 
@@ -40,7 +40,7 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
     # ── STEP 1: Generate diagnosis ──
     print("\n[Step 1] Generating neurological diagnosis...")
     disease_profiles = load_symptom_dataset()
-    diagnosis_result = generate_diagnosis(patient_profile, disease_profiles)
+    diagnosis_result = await generate_diagnosis(patient_profile, disease_profiles)
 
     if "error" in diagnosis_result:
         return {"error": f"Diagnosis failed: {diagnosis_result['error']}"}
@@ -51,13 +51,14 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
 
     # ── STEP 2: Fetch clinical trials ──
     print("\n[Step 2] Fetching clinical trials from ClinicalTrials.gov...")
-    trials = fetch_trials_for_diagnoses(diagnoses, max_per_condition=5)
+    trials = await fetch_trials_for_diagnoses(diagnoses, max_per_condition=5)
 
     if not trials:
         return {
             "diagnosis": diagnosis_result,
             "diagnosis_formatted": format_diagnosis_output(diagnosis_result, audience),
             "trials": [],
+            "trials_analyzed": 0,
             "gap_analysis": [],
             "message": "No recruiting trials found for your condition at this time."
         }
@@ -66,7 +67,7 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
 
     # ── STEP 3: Parse eligibility criteria ──
     print("\n[Step 3] Parsing eligibility criteria with LLM...")
-    enriched_trials = parse_trials_batch(trials)
+    enriched_trials = await parse_trials_batch(trials)
     print(f"  ✅ Parsed eligibility for {len(enriched_trials)} trials")
 
     # ── STEP 4: Validate parsed criteria ──
@@ -76,7 +77,7 @@ def run_neuromatch(patient_profile: dict, audience: str = "patient") -> dict:
 
     # ── STEP 5: Gap analysis ──
     print("\n[Step 5] Analyzing eligibility gaps...")
-    gap_results = analyze_all_trials(patient_profile, validated_trials)
+    gap_results = await analyze_all_trials(patient_profile, validated_trials)
 
     eligible = [g for g in gap_results if g["overall_status"] == "likely_eligible"]
     needs_info = [g for g in gap_results if g["overall_status"] == "needs_more_info"]
@@ -169,8 +170,9 @@ if __name__ == "__main__":
         "matched_trials": []
     }
 
+    import asyncio
     # Run full pipeline for patient audience
-    result = run_neuromatch(test_patient, audience="patient")
+    result = asyncio.run(run_neuromatch(test_patient, audience="patient"))
 
     # Print formatted output
     print("\n\n")

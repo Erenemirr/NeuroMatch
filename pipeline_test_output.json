@@ -1,0 +1,494 @@
+{
+  "patient_id": "pipeline_test_001",
+  "audience": "patient",
+  "diagnosis": {
+    "preliminary_diagnoses": [
+      {
+        "disease": "Alzheimer's Disease",
+        "confidence": 0.85,
+        "matching_symptoms": [
+          "memory loss",
+          "confusion",
+          "behavioral changes",
+          "difficulty with daily tasks"
+        ],
+        "missing_indicators": [
+          "amyloid beta plaques in brain imaging",
+          "elevated tau protein levels in cerebrospinal fluid"
+        ]
+      },
+      {
+        "disease": "Frontotemporal Dementia",
+        "confidence": 0.65,
+        "matching_symptoms": [
+          "behavioral changes",
+          "difficulty with daily tasks",
+          "memory loss"
+        ],
+        "missing_indicators": [
+          "frontal and temporal lobe atrophy in brain imaging",
+          "mutations in GRN or C9ORF72 genes"
+        ]
+      },
+      {
+        "disease": "Vascular Dementia",
+        "confidence": 0.4,
+        "matching_symptoms": [
+          "memory loss",
+          "confusion",
+          "difficulty with daily tasks"
+        ],
+        "missing_indicators": [
+          "evidence of cerebrovascular disease in brain imaging",
+          "history of stroke or transient ischemic attack"
+        ]
+      }
+    ],
+    "recommended_tests": [
+      "MRI or CT scan of the brain",
+      "cognitive and neuropsychological assessments",
+      "blood tests for vitamin B12 and thyroid function"
+    ],
+    "urgency_level": "medium",
+    "summary": "A 70-year-old female patient presents with progressive memory loss, confusion, behavioral changes, and difficulty with daily tasks over 6 months, suggesting a possible neurodegenerative disorder.",
+    "disclaimer": "This is not a medical diagnosis. Please consult a neurologist."
+  },
+  "diagnosis_formatted": "\ud83e\udde0 NeuroMatch Analysis\n\nBased on your symptoms, here are possible conditions:\n\n\u2022 Alzheimer's Disease: 85% match\n\u2022 Frontotemporal Dementia: 65% match\n\u2022 Vascular Dementia: 40% match\n\nRecommended next steps: MRI or CT scan of the brain, cognitive and neuropsychological assessments, blood tests for vitamin B12 and thyroid function\n\n\u26a0\ufe0f This is not a medical diagnosis. Please consult a neurologist.",
+  "trials_analyzed": 10,
+  "gap_analysis": [
+    {
+      "trial_id": "NCT06986096",
+      "trial_title": "Lifestyle for the BRAin Health - Nutrition and Exercise Training Intervention",
+      "matched_condition": "Alzheimer's Disease",
+      "start_date": "2024-09-01",
+      "completion_date": "2026-12",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 60-80"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'alzheimer's disease' matches trial condition 'alzheimer's disease'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT05655650",
+      "trial_title": "Identifying Biomarkers in Alzheimer's Disease",
+      "matched_condition": "Alzheimer's Disease",
+      "start_date": "2018-09-01",
+      "completion_date": "2030-12-31",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 20-120"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'alzheimer's disease' matches trial condition 'alzheimer's disease'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT06875986",
+      "trial_title": "REXULTI Drug General Use-results Survey (Excessive Motor Activity or Physically/Verbally Aggressive Behavior Due to Rapid Changes in Mood, Irritability, and/or Outbursts Associated With Dementia Due to Alzheimer's Disease)",
+      "matched_condition": "Alzheimer's Disease",
+      "start_date": "2025-04-17",
+      "completion_date": "2028-09-23",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 15-120"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'alzheimer's disease' matches trial condition 'alzheimer's disease'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT06801639",
+      "trial_title": "Advancing Alzheimer's Care: Home-based tDCS for Affective Symptoms",
+      "matched_condition": "Alzheimer's Disease",
+      "start_date": "2025-07-15",
+      "completion_date": "2028-12",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 60-85"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'alzheimer's disease' matches trial condition 'alzheimer's disease'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT06595511",
+      "trial_title": "Effects of Combined 40 Hz Audio-visual Stimulation and Cognitive Games on Alzheimer's Disease",
+      "matched_condition": "Alzheimer's Disease",
+      "start_date": "2022-10-01",
+      "completion_date": "2025-04-30",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 60-86"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'alzheimer's disease' matches trial condition 'alzheimer's disease'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT06690983",
+      "trial_title": "Tau PET/CT in Various Tau-Related Disease Patients",
+      "matched_condition": "Frontotemporal Dementia",
+      "start_date": "2018-08-01",
+      "completion_date": "2027-12-01",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 18-80"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'frontotemporal dementia' matches trial condition 'frontotemporal dementia'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT02964637",
+      "trial_title": "Diagnosing Frontotemporal Lobar Degeneration",
+      "matched_condition": "Frontotemporal Dementia",
+      "start_date": "2015-08",
+      "completion_date": "2026-12",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 18-90"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'frontotemporal dementia' matches trial condition 'frontotemporal dementia'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT06490822",
+      "trial_title": "The Skin as a Window to the Central Nervous System in Frontotempolar Lombar Degeneration",
+      "matched_condition": "Frontotemporal Dementia",
+      "start_date": "2024-12-17",
+      "completion_date": "2027-07",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 50-75"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'frontotemporal dementia' matches trial condition 'frontotemporal dementia'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT02945774",
+      "trial_title": "Molecular Neuroimaging of Neuroinflammation in Neurodegenerative Dementias",
+      "matched_condition": "Frontotemporal Dementia",
+      "start_date": "2016-08",
+      "completion_date": "2029-08",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 30-95"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'frontotemporal dementia' matches trial condition 'frontotemporal dementia'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    },
+    {
+      "trial_id": "NCT06856850",
+      "trial_title": "Disease Biosignatures in ALS/FTD Spectrum: New Impactful Biological Perspectives Beyond Clinical Approaches",
+      "matched_condition": "Frontotemporal Dementia",
+      "start_date": "2025-02-27",
+      "completion_date": "2026-08",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 18-120"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'frontotemporal dementia' matches trial condition 'frontotemporal dementia'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    }
+  ],
+  "summary": {
+    "likely_eligible": 0,
+    "needs_more_info": 10,
+    "likely_ineligible": 0,
+    "top_match": {
+      "trial_id": "NCT06986096",
+      "trial_title": "Lifestyle for the BRAin Health - Nutrition and Exercise Training Intervention",
+      "matched_condition": "Alzheimer's Disease",
+      "start_date": "2024-09-01",
+      "completion_date": "2026-12",
+      "rule_checks": [
+        {
+          "field": "age",
+          "patient_value": 70,
+          "status": "pass",
+          "note": "Age 70 is within 60-80"
+        },
+        {
+          "field": "gender",
+          "patient_value": "F",
+          "status": "pass",
+          "note": "Trial accepts all genders"
+        },
+        {
+          "field": "diagnosis",
+          "patient_value": [
+            "alzheimer's disease",
+            "frontotemporal dementia",
+            "vascular dementia"
+          ],
+          "status": "pass",
+          "note": "Diagnosis 'alzheimer's disease' matches trial condition 'alzheimer's disease'"
+        }
+      ],
+      "llm_analysis": {
+        "overall_status": "needs_more_info",
+        "gaps": [],
+        "strengths": [],
+        "confidence": 0
+      },
+      "overall_status": "needs_more_info",
+      "confidence": 0
+    }
+  }
+}
