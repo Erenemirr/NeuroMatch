@@ -121,7 +121,7 @@ def parse_trial_summary(study: dict) -> dict:
     }
 
 
-async def fetch_trials_for_diagnoses(diagnoses: list, max_per_condition: int = 5) -> list:
+async def fetch_trials_for_diagnoses(diagnoses: list, max_per_condition: int = 3) -> list:
     all_trials = []
     seen_ids = set()
 
@@ -217,14 +217,15 @@ async def parse_eligibility_with_llm(criteria_text: str, trial_id: str = "") -> 
         print(f"[CACHE] Using cached parsed criteria for {trial_id}")
         return ELIGIBILITY_CACHE[trial_id]
 
-    truncated_text = _smart_truncate(criteria_text, max_chars=3000)
+    # Use smaller, high-quota model for bulk structured extraction
+    truncated_text = _smart_truncate(criteria_text, max_chars=2000)
 
     try:
         # Retry loop for 429 errors
         for attempt in range(3):
             try:
                 response = await client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {
                             "role": "system",
