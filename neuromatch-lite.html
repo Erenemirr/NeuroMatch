@@ -335,6 +335,7 @@ const AL = {
 
 let aud = "patient";
 let _apiMatches = [];
+let _lastRequest = null;
 
 function switchTab(t) {
   document.querySelectorAll('.tab').forEach((b,i) => b.classList.toggle('active', (t==='text'&&i===0)||(t==='upload'&&i===1)));
@@ -379,20 +380,23 @@ async function runAnalysis() {
     .filter(s => s.length > 4)
     .slice(0, 8);
 
+  // Save request for PDF download
+  _lastRequest = {
+    patient_id: 'web_' + Date.now(),
+    age: age,
+    gender: gender,
+    symptoms: symptoms.length ? symptoms : [symptomText],
+    duration: 'Unknown',
+    existing_conditions: cond ? [cond] : [],
+    medications: [],
+    audience: aud
+  };
+
   try {
     const response = await fetch('http://localhost:8000/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        patient_id: 'web_' + Date.now(),
-        age: age,
-        gender: gender,
-        symptoms: symptoms.length ? symptoms : [symptomText],
-        duration: 'Unknown',
-        existing_conditions: cond ? [cond] : [],
-        medications: [],
-        audience: aud
-      })
+      body: JSON.stringify(_lastRequest)
     });
 
     clearInterval(iv);
@@ -410,8 +414,34 @@ async function runAnalysis() {
   } catch (err) {
     clearInterval(iv);
     document.getElementById('loader-panel').style.display = 'none';
-    document.getElementById('input-panel').style.display = 'block';
-    alert('Could not connect to NeuroMatch API.\n\nMake sure the backend is running:\n  python api.py\n\nError: ' + err.message);
+
+    const isRateLimit = err.message && err.message.toLowerCase().includes('rate limit');
+    const waitMatch = err.message && err.message.match(/try again in ([\d]+m[\d.]+s|[\d.]+ seconds?)/i);
+    const waitTime = waitMatch ? waitMatch[1] : null;
+
+    if (isRateLimit) {
+      document.getElementById('results-panel').style.display = 'block';
+      document.getElementById('results-panel').innerHTML = `
+        <div class="card">
+          <div style="display:flex;flex-direction:column;align-items:center;padding:2.5rem 1rem;gap:1.25rem;text-align:center">
+            <div style="font-size:40px">⏳</div>
+            <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:600;color:var(--t1)">Rate Limit Reached</div>
+            <div style="font-size:14px;color:var(--t2);line-height:1.7;max-width:420px">
+              The AI model has reached its daily token limit.
+              ${waitTime ? `<br><br><strong>Please try again in <span style="color:var(--blue)">${waitTime}</span>.</strong>` : '<br><br>Please try again in a few minutes.'}
+            </div>
+            <button class="btn btn-p" style="margin-top:0.5rem" onclick="resetForm()">← Back to Search</button>
+          </div>
+        </div>`;
+    } else {
+      document.getElementById('input-panel').style.display = 'block';
+      document.getElementById('results-panel').innerHTML = `
+        <div class="card err-box">
+          ⚠️ Could not connect to NeuroMatch API. Make sure the backend is running (<code>python api.py</code>).<br><br>
+          <span style="font-size:11px;opacity:.7">${err.message}</span>
+        </div>`;
+      document.getElementById('results-panel').style.display = 'block';
+    }
   }
 }
 
@@ -441,6 +471,7 @@ function renderResultsFromAPI(data) {
       <div class="rtitle">Match results</div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-g btn-sm" onclick="resetForm()">← New search</button>
+        <button class="btn btn-p btn-sm" id="pdf-btn" onclick="downloadReport()">↓ Download PDF</button>
       </div>
     </div>
 
@@ -501,7 +532,7 @@ function renderTrialCardsAPI(matches, filter) {
     ).join('');
 
     const gaps = (t.gaps || []).map(g =>
-      `<div class="cr"><span class="ci">⚠️</span><span><strong>${g.criterion}</strong>${g.explanation ? ' — ' + g.explanation : ''}${g.action ? '<br><span style="color:var(--blue);font-size:11px">→ ' + g.action + '</span>' : ''}</span></div>`
+      `<div class="cr"><span class="ci">⚠️</span><span><strong>${g.criterion}</strong>${g.explanation ? ' — ' + g.explanation : ''}</span></div>`
     ).join('');
 
     const nctUrl = `https://clinicaltrials.gov/study/${t.trial_id}`;
@@ -519,6 +550,15 @@ function renderTrialCardsAPI(matches, filter) {
       </div>
       ${strengths || gaps ? `<div class="crit">${strengths}${gaps}</div>` : ''}
       ${t.summary_patient ? `<div style="margin-top:10px;font-size:13px;color:var(--t2);line-height:1.6;padding-top:10px;border-top:1px solid var(--b1)">${t.summary_patient}</div>` : ''}
+      ${(t.gaps && t.gaps.length) ? `
+        <div style="margin-top:12px;padding:12px 14px;border-radius:8px;background:rgba(37,99,235,0.04);border:1px solid rgba(37,99,235,0.12)">
+          <div style="font-size:11px;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">📋 Next Steps</div>
+          ${t.gaps.map((g, gi) => g.action ? `
+            <div style="display:flex;gap:8px;margin-bottom:${gi < t.gaps.length-1 ? '6px' : '0'};font-size:12px;color:var(--t2);line-height:1.5">
+              <span style="color:var(--blue);font-weight:600;flex-shrink:0">${gi+1}.</span>
+              <span>${g.action}</span>
+            </div>` : '').join('')}
+        </div>` : ''}
     </div>`;
   }).join('');
 }
@@ -532,6 +572,41 @@ function resetForm() {
   document.getElementById('results-panel').style.display = 'none';
   document.getElementById('input-panel').style.display = 'block';
   _apiMatches = [];
+  _lastRequest = null;
+}
+
+async function downloadReport() {
+  if (!_lastRequest) {
+    alert('Please run an analysis first.');
+    return;
+  }
+  const btn = document.getElementById('pdf-btn');
+  btn.textContent = '⏳ Generating...';
+  btn.disabled = true;
+
+  try {
+    const response = await fetch('http://localhost:8000/report', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_lastRequest)
+    });
+
+    if (!response.ok) throw new Error('PDF generation failed');
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'NeuroMatch_Report.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+
+  } catch (err) {
+    alert('PDF oluşturulamadı: ' + err.message);
+  } finally {
+    btn.textContent = '↓ Download PDF';
+    btn.disabled = false;
+  }
 }
 </script>
 </body>
